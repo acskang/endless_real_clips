@@ -1,0 +1,59 @@
+{% load static %}
+<!-- 최적화된 JavaScript 로드 -->
+
+<!-- 1. Django 템플릿 데이터 전달 (가장 먼저) -->
+<script>
+    // Django에서 전달된 데이터를 전역 변수로 설정
+    window.djangoData = {
+        csrf_token: '{{ csrf_token }}',
+        
+        // URL 패턴
+        urls: {
+            popular_searches: '/api/search/',
+            statistics: '/api/schema/',
+            bulk_translate: ''
+        },
+        
+        // 현재 검색 정보
+        search: {
+            query: "{{ message|escapejs }}",
+            translated: "{{ translated_message|escapejs }}",
+            phrase: "{{ search_used|escapejs }}",
+            hasResults: {{ movies|yesno:"true,false" }},
+            totalResults: {{ total_results|default:0 }},
+            fromCache: {{ from_cache|yesno:"true,false" }},
+            source: "{{ source|default:'database' }}"
+        },
+        
+        // 설정
+        settings: {
+            maxSearchLength: 500,
+            minSearchLength: 2,
+            debounceDelay: 300,
+            cacheTimeout: 600000
+        }
+    };
+</script>
+
+<!-- 2. 외부 라이브러리 (defer로 최적화) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+
+<!-- 3. 모듈화된 JavaScript (defer로 최적화, 순서 중요!) -->
+<script src="{% static 'js/app.js' %}" defer></script>        <!-- 앱 초기화 & 전역 설정 -->
+<script src="{% static 'js/utils.js' %}" defer></script>      <!-- 유틸리티 함수들 -->
+<script src="{% static 'js/search.js' %}" defer></script>     <!-- 검색 폼 & 입력 처리 -->
+<script src="{% static 'js/loading.js' %}" defer></script>    <!-- 로딩 애니메이션 시스템 -->
+<script src="{% static 'js/ui.js' %}" defer></script>         <!-- UI 인터랙션 & 이벤트 -->
+
+<!-- 4. 개발 환경에서만 로드되는 디버그 스크립트 (선택사항) -->
+{% if settings.DEBUG %}
+<script>
+    console.log('🎬 디버그 모드 활성화');
+    console.log('📊 Django 데이터:', window.djangoData);
+    
+    // 성능 모니터링
+    window.addEventListener('load', function() {
+        console.log('⚡ 페이지 로드 완료:', performance.now().toFixed(2) + 'ms');
+    });
+</script>
+{% endif %}

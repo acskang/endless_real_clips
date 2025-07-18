@@ -1,0 +1,36 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko" data-bs-theme="dark">
+<head>
+    {% include 'partials/head.html' %}
+    {% block extra_css %}{% endblock extra_css %}
+</head>
+<body class="bg-dark text-white">
+    <!-- 네트워크 상태 표시 -->
+    <div id="network-status" class="alert alert-warning position-fixed top-0 start-50 translate-middle-x mt-3" style="display: none; z-index: 1060;">
+        <i class="fas fa-wifi"></i> 오프라인 상태입니다. 일부 기능이 제한될 수 있습니다.
+    </div>
+
+    <!-- 로딩 오버레이 -->
+    {% include 'components/loading.html' %}
+
+    <!-- 메인 컨테이너 -->
+    <div class="container py-4">
+        {% block content %}
+        <!-- 페이지별 콘텐츠가 여기에 들어갑니다 -->
+        {% endblock content %}
+    </div>
+
+    <!-- 모달들 -->
+    {% include 'components/modals.html' %}
+
+    <!-- 토스트 컨테이너 -->
+    <div id="toast-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1100;">
+        <!-- 동적으로 토스트 추가됨 -->
+    </div>
+
+    <!-- JavaScript -->
+    {% include 'partials/scripts_optimized.html' %}
+    {% block extra_js %}{% endblock extra_js %}
+</body>
+</html>

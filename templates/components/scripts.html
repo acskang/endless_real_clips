@@ -1,0 +1,320 @@
+{% load static %}
+<!-- JavaScript 로드 -->
+
+<!-- Django 템플릿 데이터 전달 -->
+<script>
+    // 실제 Django views.py에서 전달된 데이터
+    window.djangoData = {
+        csrf_token: '{{ csrf_token }}',
+        
+        // URL 패턴 (API 미구현 시 임시 처리)
+        urls: {
+            {% comment %}
+            // API가 구현되면 아래 주석을 해제하세요:
+            popular_searches: '{% url "phrase:popular_searches_api" %}',
+            statistics: '{% url "phrase:statistics_api" %}',
+            bulk_translate: '{% url "phrase:bulk_translate_dialogues" %}'
+              {% endcomment %}
+            popular_searches: '/api/search/',  // 임시로 기존 API 사용
+            statistics: '/api/schema/',  // 임시로 기존 API 사용  
+            bulk_translate: ''  // 미구현
+        },
+        
+        // 현재 검색 정보
+        search: {
+            query: "{{ message|escapejs }}",
+            translated: "{{ translated_message|escapejs }}",
+            phrase: "{{ search_used|escapejs }}",
+            hasResults: {{ movies|yesno:"true,false" }},
+            totalResults: {{ total_results|default:0 }},
+            fromCache: {{ from_cache|yesno:"true,false" }},
+            source: "{{ source|default:'database' }}"
+        },
+        
+        // 설정
+        settings: {
+            maxSearchLength: 500,  // RequestTable.request_phrase max_length
+            minSearchLength: 2,
+            debounceDelay: 300,
+            cacheTimeout: 600000
+        }
+    };
+
+    // ===== 🎬 비디오 모달 함수 (즉시 정의) =====
+    // 🔧 즉시 정의하여 HTML에서 바로 호출 가능하도록 함
+    window.openVideoModal = function(videoUrl, title, year, country, textEn, textKo) {
+        console.log('🎬 [DEBUG] 비디오 모달 함수 시작:', { videoUrl, title, year, country, textEn, textKo });
+        
+        try {
+            // 모달 제목 설정
+            console.log('🎬 [DEBUG] 1. 모달 제목 설정 시작');
+            const modalTitle = document.getElementById('modal-title');
+            console.log('🎬 [DEBUG] modalTitle 요소:', modalTitle);
+            if (modalTitle) {
+                modalTitle.textContent = `${title} (${year}, ${country})`;
+                console.log('🎬 [DEBUG] 모달 제목 설정 완료:', modalTitle.textContent);
+            }
+
+            // 영어 대사 설정
+            console.log('🎬 [DEBUG] 2. 영어 대사 설정 시작');
+            const modalTextEn = document.getElementById('modal-text-en');
+            console.log('🎬 [DEBUG] modalTextEn 요소:', modalTextEn);
+            if (modalTextEn) {
+                modalTextEn.textContent = `"${textEn}"`;
+                console.log('🎬 [DEBUG] 영어 대사 설정 완료');
+            }
+
+            // 한글 번역 설정
+            console.log('🎬 [DEBUG] 3. 한글 번역 설정 시작');
+            const modalTextKo = document.getElementById('modal-text-ko');
+            console.log('🎬 [DEBUG] modalTextKo 요소:', modalTextKo);
+            if (modalTextKo) {
+                if (textKo && textKo.trim()) {
+                    modalTextKo.innerHTML = `💾 "${textKo}"`;
+                    console.log('🎬 [DEBUG] 한글 번역 설정 완료 (번역됨)');
+                } else {
+                    modalTextKo.innerHTML = '<span class="text-muted">번역이 필요합니다.</span>';
+                    console.log('🎬 [DEBUG] 한글 번역 설정 완료 (미번역)');
+                }
+            }
+
+            // 🔧 비디오 요소 처리
+            console.log('🎬 [DEBUG] 4. 비디오 요소 찾기 시작');
+            const videoLoading = document.getElementById('video-loading');
+            const modalVideo = document.getElementById('modal-video');
+            const videoError = document.getElementById('video-error');
+            
+            console.log('🎬 [DEBUG] DOM 요소 확인:', {
+                videoLoading: !!videoLoading,
+                modalVideo: !!modalVideo,
+                videoError: !!videoError,
+                videoExists: !!modalVideo,
+                videoUrl: videoUrl,
+                videoUrlLength: videoUrl ? videoUrl.length : 0
+            });
+
+            // 초기 상태
+            console.log('🎬 [DEBUG] 5. 초기 상태 설정 시작');
+            if (videoLoading) {
+                videoLoading.classList.remove('d-none');
+                console.log('🎬 [DEBUG] 비디오 로딩 표시됨');
+            } else {
+                console.warn('🎬 [DEBUG] ⚠️ videoLoading 요소 없음');
+            }
+            
+            if (modalVideo) {
+                modalVideo.classList.add('d-none');
+                console.log('🎬 [DEBUG] 모달 비디오 숨김');
+            } else {
+                console.error('🎬 [DEBUG] ❌ modalVideo 요소 없음!');
+            }
+            
+            if (videoError) {
+                videoError.classList.add('d-none');
+                console.log('🎬 [DEBUG] 비디오 에러 숨김');
+            } else {
+                console.warn('🎬 [DEBUG] ⚠️ videoError 요소 없음');
+            }
+
+            console.log('🎬 [DEBUG] 6. URL 및 비디오 요소 유효성 검사');
+            console.log('🎬 [DEBUG] 조건 확인:', {
+                'videoUrl exists': !!videoUrl,
+                'videoUrl trimmed': videoUrl && videoUrl.trim(),
+                'modalVideo exists': !!modalVideo,
+                'all conditions': videoUrl && videoUrl.trim() && modalVideo
+            });
+
+            if (videoUrl && videoUrl.trim() && modalVideo) {
+                console.log('🎬 [DEBUG] ✅ 모든 조건 통과 - 비디오 설정 시작');
+                
+                // 🔧 비디오 소스 설정
+                console.log('🎬 [DEBUG] 7. 비디오 소스 설정 시작');
+                const videoSource = document.getElementById('video-source');
+                console.log('🎬 [DEBUG] videoSource 요소:', videoSource);
+                if (videoSource) {
+                    videoSource.src = videoUrl;
+                    console.log('🎬 [DEBUG] 비디오 소스 설정 완료:', videoSource.src);
+                } else {
+                    console.error('🎬 [DEBUG] ❌ videoSource 요소 없음!');
+                }
+
+                // 🔧 모든 비디오 속성을 JavaScript에서만 설정
+                console.log('🎬 [DEBUG] 8. 비디오 속성 제거 시작');
+                modalVideo.removeAttribute('autoplay');  
+                modalVideo.removeAttribute('muted');     
+                modalVideo.removeAttribute('loop');       
+                modalVideo.removeAttribute('controls');   
+                modalVideo.removeAttribute('preload'); 
+                console.log('🎬 [DEBUG] HTML 속성 제거 완료');
+                
+                // ✅ 최종 속성 설정: 자동재생 비활성화, 음소거 해제
+                console.log('🎬 [DEBUG] 9. JavaScript 속성 설정 시작');
+                modalVideo.controls = true;        // 컨트롤 표시
+                modalVideo.loop = true;           // 무한 루프
+                modalVideo.autoplay = false;      // 🔧 자동재생 비활성화!
+                modalVideo.muted = false;         // 🔧 음소거 해제!
+                modalVideo.volume = 1.0;          // 볼륨 최대
+                modalVideo.preload = 'metadata';  // 메타데이터만 미리 로드
+                console.log('🎬 [DEBUG] JavaScript 속성 설정 완료');
+                
+                console.log('🎬 [DEBUG] 10. 최종 비디오 속성 확인:', {
+                    autoplay: modalVideo.autoplay,           // false여야 함
+                    muted: modalVideo.muted,                 // false여야 함
+                    volume: modalVideo.volume,               // 1.0이어야 함
+                    loop: modalVideo.loop,                   // true
+                    controls: modalVideo.controls,           // true
+                    hasAutoplayAttr: modalVideo.hasAttribute('autoplay'),  // false여야 함
+                    hasMutedAttr: modalVideo.hasAttribute('muted'),        // false여야 함
+                    src: videoSource ? videoSource.src : 'No source',
+                    readyState: modalVideo.readyState,
+                    networkState: modalVideo.networkState
+                });
+                
+                // 🔧 이벤트 리스너 설정 (한 번만 실행)
+                console.log('🎬 [DEBUG] 11. 이벤트 리스너 설정 시작');
+                modalVideo.onloadeddata = function() {
+                    console.log('🎬 [DEBUG] 📹 loadeddata 이벤트 발생 - 비디오 데이터 로드 완료');
+                    console.log('🎬 [DEBUG] 로드 후 최종 상태:', {
+                        autoplay: this.autoplay,
+                        muted: this.muted,
+                        volume: this.volume,
+                        loop: this.loop,
+                        readyState: this.readyState,
+                        paused: this.paused,
+                        currentTime: this.currentTime,
+                        duration: this.duration
+                    });
+                    
+                    console.log('🎬 [DEBUG] 로딩 화면 숨기기 시작');
+                    if (videoLoading) {
+                        videoLoading.classList.add('d-none');
+                        console.log('🎬 [DEBUG] 로딩 화면 숨김 완료');
+                    }
+                    
+                    console.log('🎬 [DEBUG] 비디오 표시하기 시작');
+                    modalVideo.classList.remove('d-none');
+                    console.log('🎬 [DEBUG] 비디오 표시 완료');
+                    
+                    console.log('🎬 [DEBUG] ▶️ 사용자가 재생 버튼을 눌러야 재생됩니다 (🔊 소리 포함)');
+                    
+                    // 🔧 추가 확인: 자동재생이 시작되지 않았는지 체크
+                    if (!this.paused) {
+                        console.warn('🎬 [DEBUG] ⚠️ 예상치 못한 자동재생 감지 - 일시정지');
+                        this.pause();
+                        this.currentTime = 0;
+                    } else {
+                        console.log('🎬 [DEBUG] ✅ 비디오가 올바르게 일시정지 상태');
+                    }
+                };
+                
+                modalVideo.onerror = function(e) {
+                    console.error('🎬 [DEBUG] ❌ error 이벤트 발생 - 비디오 로드 실패:', e);
+                    console.error('🎬 [DEBUG] 에러 상세:', {
+                        error: this.error,
+                        networkState: this.networkState,
+                        readyState: this.readyState
+                    });
+                    
+                    if (videoLoading) {
+                        videoLoading.classList.add('d-none');
+                        console.log('🎬 [DEBUG] 로딩 화면 숨김 (에러)');
+                    }
+                    if (videoError) {
+                        videoError.classList.remove('d-none');
+                        console.log('🎬 [DEBUG] 에러 화면 표시');
+                        
+                        const errorMessage = document.getElementById('error-message');
+                        const errorUrl = document.getElementById('error-url');
+                        if (errorMessage) errorMessage.textContent = '비디오를 로드할 수 없습니다.';
+                        if (errorUrl) errorUrl.textContent = videoUrl;
+                    }
+                };
+                
+                modalVideo.onloadstart = function() {
+                    console.log('🎬 [DEBUG] loadstart 이벤트 - 로드 시작됨');
+                };
+                
+                modalVideo.onprogress = function() {
+                    console.log('🎬 [DEBUG] progress 이벤트 - 로드 진행 중');
+                };
+                
+                modalVideo.oncanplay = function() {
+                    console.log('🎬 [DEBUG] canplay 이벤트 - 재생 가능한 상태');
+                };
+                
+                // 🔧 비디오 로드 시작
+                console.log('🎬 [DEBUG] 12. 비디오 로드 시작');
+                modalVideo.load();
+                console.log('🎬 [DEBUG] modalVideo.load() 호출 완료');
+                
+            } else {
+                console.error('🎬 [DEBUG] ❌ 조건 실패:', {
+                    videoUrl: videoUrl,
+                    'videoUrl && videoUrl.trim()': videoUrl && videoUrl.trim(),
+                    modalVideo: modalVideo
+                });
+                
+                if (videoLoading) {
+                    videoLoading.classList.add('d-none');
+                    console.log('🎬 [DEBUG] 로딩 화면 숨김 (조건 실패)');
+                }
+                if (videoError) {
+                    videoError.classList.remove('d-none');
+                    console.log('🎬 [DEBUG] 에러 화면 표시 (조건 실패)');
+                    
+                    const errorMessage = document.getElementById('error-message');
+                    const errorUrl = document.getElementById('error-url');
+                    if (errorMessage) {
+                        errorMessage.textContent = videoUrl ? '비디오 요소를 찾을 수 없습니다.' : '비디오 URL이 없습니다.';
+                    }
+                    if (errorUrl) {
+                        errorUrl.textContent = videoUrl || '알 수 없음';
+                    }
+                }
+            }
+            
+            console.log('🎬 [DEBUG] 함수 실행 완료');
+            
+        } catch (error) {
+            console.error('🎬 [DEBUG] ❌ 예외 발생:', error);
+            console.error('🎬 [DEBUG] 스택 트레이스:', error.stack);
+        }
+    };
+
+    // ===== 🔄 비디오 재시도 함수 (즉시 정의) =====
+    window.retryVideo = function() {
+        console.log('🔄 [DEBUG] 비디오 재시도 함수 호출');
+        const modalVideo = document.getElementById('modal-video');
+        console.log('🔄 [DEBUG] modalVideo 요소:', modalVideo);
+        if (modalVideo) {
+            console.log('🔄 [DEBUG] modalVideo.load() 호출');
+            modalVideo.load();
+            console.log('🔄 [DEBUG] 재시도 완료');
+        } else {
+            console.warn('🔄 [DEBUG] ⚠️ 비디오 요소를 찾을 수 없습니다');
+        }
+    };
+
+    // ===== 🧹 모달 닫힐 때 정리 =====
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🧹 [DEBUG] DOMContentLoaded 이벤트 - 모달 정리 리스너 설정');
+        const videoModal = document.getElementById('video-modal');
+        console.log('🧹 [DEBUG] videoModal 요소:', videoModal);
+        if (videoModal) {
+            videoModal.addEventListener('hidden.bs.modal', function() {
+                console.log('🧹 [DEBUG] 모달 닫힘 이벤트 발생');
+                const modalVideo = document.getElementById('modal-video');
+                if (modalVideo) {
+                    modalVideo.pause();
+                    modalVideo.currentTime = 0;
+                    console.log('🧹 [DEBUG] 🚪 모달 닫힘 - 비디오 정리 완료');
+                } else {
+                    console.warn('🧹 [DEBUG] ⚠️ 정리할 비디오 요소 없음');
+                }
+            });
+            console.log('🧹 [DEBUG] 모달 정리 리스너 등록 완료');
+        } else {
+            console.warn('🧹 [DEBUG] ⚠️ videoModal 요소 없음 - 정리 리스너 등록 실패');
+        }
+    });
+</script>

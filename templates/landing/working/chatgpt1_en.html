@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en" x-data="{ open: false, darkMode: false, modalOpen: false }" :class="{ 'dark': darkMode }">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TheSysM - AI-Collaborative Development</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+    <script src="https://unpkg.com/alpinejs" defer></script>
+  </head>
+  <body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans">
+    <!-- Navbar -->
+    <header class="fixed w-full top-0 z-50 bg-white/90 dark:bg-gray-800/90 shadow-md backdrop-blur-lg">
+      <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+        <a href="#home" class="text-2xl font-bold text-gradient bg-gradient-to-r from-blue-500 to-teal-400 bg-clip-text text-transparent">
+          TheSysM
+        </a>
+        <nav class="hidden md:flex gap-6">
+          <a href="#about" class="hover:text-blue-500 transition">About</a>
+          <a href="#services" class="hover:text-blue-500 transition">Services</a>
+          <a href="#methodology" class="hover:text-blue-500 transition">Methodology</a>
+          <a href="#innovation" class="hover:text-blue-500 transition">Innovation</a>
+          <a href="#contact" class="hover:text-blue-500 transition">Contact</a>
+        </nav>
+        <div class="flex items-center gap-4">
+          <button @click="darkMode = !darkMode" class="text-xl">🌙</button>
+          <button class="md:hidden text-xl" @click="open = !open">☰</button>
+        </div>
+      </div>
+      <div x-show="open" class="md:hidden px-4 pb-4">
+        <a href="#about" class="block py-2">About</a>
+        <a href="#services" class="block py-2">Services</a>
+        <a href="#methodology" class="block py-2">Methodology</a>
+        <a href="#innovation" class="block py-2">Innovation</a>
+        <a href="#contact" class="block py-2">Contact</a>
+      </div>
+    </header>
+
+    <!-- Hero -->
+    <section id="home" class="h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white text-center px-4">
+      <div class="max-w-3xl space-y-6">
+        <h1 class="text-4xl md:text-5xl font-bold">Revolutionizing AI-Human Collaborative Development</h1>
+        <p class="text-lg md:text-xl">Experience 10x productivity through our innovative 11-stage AI-collaborative methodology.</p>
+        <div class="flex flex-wrap gap-4 justify-center">
+          <a href="#contact" class="px-6 py-3 bg-red-500 hover:bg-red-600 rounded-full font-semibold transition">Start Transformation</a>
+          <a href="#methodology" class="px-6 py-3 border border-white hover:bg-white hover:text-indigo-600 rounded-full font-semibold transition">Explore Methodology</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="py-20 bg-white dark:bg-gray-800">
+      <div class="max-w-6xl mx-auto px-4">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl font-bold">About TheSysM</h2>
+          <p class="text-gray-500 dark:text-gray-300 mt-2">Pioneering the future of software development through AI-human collaboration.</p>
+        </div>
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+          <div>
+            <h3 class="text-2xl font-semibold text-blue-600 mb-4">The System Ideas Revolution</h3>
+            <p class="text-gray-600 dark:text-gray-300 mb-4">TheSysM is redefining how humans and AI build exceptional systems. Our 11-stage collaborative methodology brings unprecedented speed and innovation.</p>
+            <p class="text-gray-600 dark:text-gray-300">We don't just use AI—we build with it, creating a synergy between human creativity and machine intelligence.</p>
+          </div>
+          <div class="bg-gray-100 dark:bg-gray-700 p-8 rounded-xl text-center shadow">
+            <div class="w-24 h-24 mx-auto rounded-full bg-gradient-to-r from-indigo-500 to-purple-400 flex items-center justify-center text-white text-3xl font-bold mb-4">GK</div>
+            <h4 class="text-xl font-semibold">ganzsKang</h4>
+            <p class="text-sm text-gray-500 dark:text-gray-300">Founder & Chief Innovation Officer</p>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">Full-stack architect and AI collaboration pioneer.<br />Email: acskang@gmail.com</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="py-20 bg-gray-50 dark:bg-gray-900">
+      <div class="max-w-6xl mx-auto px-4">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl font-bold">Our Services</h2>
+          <p class="text-gray-500 dark:text-gray-300">Comprehensive solutions for AI-collaborative development transformation</p>
+        </div>
+        <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+          <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow hover:shadow-xl transition">
+            <h3 class="text-xl font-semibold mb-2">Methodology Consulting</h3>
+            <p class="text-gray-600 dark:text-gray-300 text-sm">Customized AI-collaborative workflow integration for rapid impact.</p>
+          </div>
+          <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow hover:shadow-xl transition">
+            <h3 class="text-xl font-semibold mb-2">Professional Training</h3>
+            <p class="text-gray-600 dark:text-gray-300 text-sm">Workshops and programs for AI-prompting and agile collaboration.</p>
+          </div>
+          <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow hover:shadow-xl transition">
+            <h3 class="text-xl font-semibold mb-2">System Architecture</h3>
+            <p class="text-gray-600 dark:text-gray-300 text-sm">Scalable, modular AI-driven system design and guidance.</p>
+          </div>
+          <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow hover:shadow-xl transition">
+            <h3 class="text-xl font-semibold mb-2">AI-Agile Integration</h3>
+            <p class="text-gray-600 dark:text-gray-300 text-sm">Modernize your agile process with intelligent augmentation.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Modal (Alpine.js controlled) -->
+    <div x-show="modalOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md w-full shadow-lg relative">
+        <button @click="modalOpen = false" class="absolute top-2 right-2 text-xl">×</button>
+        <h2 class="text-xl font-bold mb-2">Want to learn more?</h2>
+        <p class="text-gray-600 dark:text-gray-300 text-sm mb-4">Schedule a free consultation and discover how we can transform your development workflow.</p>
+        <button @click="modalOpen = false" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded">Close</button>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6 text-center">
+      <p>&copy; 2024 TheSysM. All rights reserved.</p>
+    </footer>
+  </body>
+</html>

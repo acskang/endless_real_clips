@@ -1,0 +1,61 @@
+<!-- 비디오 모달 -->
+<div class="modal fade" id="video-modal" tabindex="-1" aria-labelledby="video-modal-label" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content bg-dark border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-primary" id="modal-title">영화 제목</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <!-- 비디오 로딩 -->
+                <div id="video-loading" class="d-flex flex-column align-items-center justify-content-center py-5">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">비디오 로딩 중...</span>
+                    </div>
+                    <p class="text-light">비디오를 불러오는 중...</p>
+                </div>
+                
+                <!-- 비디오 플레이어 (모든 재생 관련 속성 제거!) -->
+                <video id="modal-video" class="w-100 d-none">
+                    <source id="video-source" src="" type="video/mp4">
+                    <source id="video-source-webm" src="" type="video/webm">
+                    <source id="video-source-ogg" src="" type="video/ogg">
+                    브라우저가 비디오를 지원하지 않습니다.
+                </video>
+                
+                <!-- 비디오 오류 -->
+                <div id="video-error" class="d-none">
+                    <div class="error-content text-center py-5">
+                        <i class="fas fa-exclamation-triangle text-danger mb-3" style="font-size: 3rem;"></i>
+                        <h4 class="text-danger mb-3">비디오 재생 오류</h4>
+                        <p id="error-message" class="text-light mb-3">오류 메시지</p>
+                        <div class="error-details mb-4">
+                            <p class="text-muted mb-1">비디오 URL:</p>
+                            <code id="error-url" class="text-warning">URL 표시</code>
+                        </div>
+                        <button onclick="retryVideo()" class="btn btn-primary">
+                            <i class="fas fa-redo me-2"></i>다시 시도
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <!-- 영어 대사 -->
+                <div class="w-100 mb-3">
+                    <h6 class="text-light mb-2">
+                        <i class="fas fa-quote-left me-1"></i>영어 대사
+                    </h6>
+                    <p id="modal-text-en" class="text-light mb-0">영어 대사가 여기에 표시됩니다.</p>
+                </div>
+                
+                <!-- 한글 번역 -->
+                <div class="w-100">
+                    <h6 class="text-success mb-2">
+                        <i class="fas fa-language me-1"></i>한글 번역
+                    </h6>
+                    <p id="modal-text-ko" class="text-success mb-0">한글 번역이 여기에 표시됩니다.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

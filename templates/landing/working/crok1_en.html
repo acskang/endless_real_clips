@@ -1,0 +1,172 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TheSysM</title>
+  <link rel="stylesheet" href="styles.css"> <!-- 외부 CSS 파일로 스타일링 필요 -->
+  <style>
+    body { background-color: #1a1a1a; color: #fff; font-family: Arial, sans-serif; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    .hero, .section { margin-bottom: 40px; }
+    .hero img, .section img { max-width: 100%; border-radius: 10px; }
+    .nav { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; }
+    .nav a { color: #a3a3ff; margin-left: 20px; text-decoration: none; }
+    .btn { background-color: #a3a3ff; color: #fff; padding: 10px 20px; border-radius: 5px; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <nav class="nav">
+      <div class="logo">TheSysM</div>
+      <ul class="nav-links">
+        <li><a href="#about">About</a></li>
+        <li><a href="#services">Services</a></li>
+        <li><a href="#methodology">Methodology</a></li>
+        <li><a href="#innovation">Innovation</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+      <a href="#signup" class="btn">Sign Up</a>
+    </nav>
+  </header>
+
+  <section id="hero" class="hero">
+    <img src="https://images.unsplash.com/photo-1516321310763-4b4c0a06f4b2" alt="AI collaboration illustration" class="hero-image">
+    <div class="hero-content">
+      <h1>Revolutionizing AI-Human Collaborative Development</h1>
+      <p>Experience 10x productivity through our innovative 11-stage AI-collaborative methodology.</p>
+      <a href="#contact" class="btn">Start Transformation</a>
+      <a href="#methodology" class="btn secondary">Explore Methodology</a>
+    </div>
+  </section>
+
+  <section id="about" class="section container">
+    <h2>About TheSysM</h2>
+    <p>Pioneering the future of software development through AI-human collaboration.</p>
+    <div class="about-content">
+      <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40" alt="Team working together" class="about-image">
+      <div class="about-text">
+        <h3>The System Ideas Revolution</h3>
+        <p>TheSysM is redefining how humans and AI build exceptional systems. Our 11-stage methodology brings speed and innovation.</p>
+      </div>
+      <div class="about-team">
+        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d" alt="Founder portrait" class="team-image">
+        <h3>GK</h3>
+        <h4>ganzsKang</h4>
+        <p>Founder & Chief Innovation Officer</p>
+        <p>Email: <a href="mailto:acskang@gmail.com">acskang@gmail.com</a></p>
+      </div>
+    </div>
+  </section>
+
+  <section id="services" class="section container">
+    <h2>Our Services</h2>
+    <p>Comprehensive solutions for AI-collaborative development transformation</p>
+    <div class="services-grid">
+      <div class="service-item">
+        <img src="https://images.unsplash.com/photo-1551288049-b1f991b969c6" alt="Consulting icon" class="service-image">
+        <h3>Methodology Consulting</h3>
+        <p>Customized AI-collaborative workflow integration.</p>
+      </div>
+      <div class="service-item">
+        <img src="https://images.unsplash.com/photo-1516321310763-4b4c0a06f4b2" alt="Training icon" class="service-image">
+        <h3>Professional Training</h3>
+        <p>Workshops for AI-prompting and agile collaboration.</p>
+      </div>
+      <div class="service-item">
+        <img src="https://images.unsplash.com/photo-1620712943543-bcc4688e7485" alt="Architecture icon" class="service-image">
+        <h3>System Architecture</h3>
+        <p>Scalable, AI-driven system design.</p>
+      </div>
+      <div class="service-item">
+        <img src="https://images.unsplash.com/photo-1516321310763-4b4c0a06f4b2" alt="Integration icon" class="service-image">
+        <h3>AI-Agile Integration</h3>
+        <p>Modernize your agile process with AI.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="consultation" class="section container">
+    <h2>Want to learn more?</h2>
+    <p>Schedule a free consultation to transform your development workflow.</p>
+    <a href="#contact" class="btn">Contact Us</a>
+  </section>
+
+  <footer class="container">
+    <div class="footer-content">
+      <div class="footer-logo">TheSysM</div>
+      <div class="footer-links">
+        <div>
+          <h4>Product</h4>
+          <ul>
+            <li>Features</li>
+            <li>Integrations</li>
+            <li>Pricing</li>
+          </ul>
+        </div>
+        <div>
+          <h4>Resources</h4>
+          <ul>
+            <li>Blog</li>
+            <li>User Guides</li>
+            <li>Developers</li>
+          </ul>
+        </div>
+        <div>
+          <h4>Company</h4>
+          <ul>
+            <li>About us</li>
+            <li>Careers</li>
+          </ul>
+        </div>
+        <div>
+          <h4>Subscribe</h4>
+          <p>For updates and insights</p>
+          <input type="email" placeholder="Input your email">
+          <button class="btn">Subscribe</button>
+        </div>
+      </div>
+    </div>
+    <p>© 2025 TheSysM. All rights reserved.</p>
+  </footer>
+</body>
+</html>

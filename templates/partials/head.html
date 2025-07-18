@@ -1,0 +1,34 @@
+{% load static %}
+<!-- HTML head 섹션 -->
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}{% if message %}{{ message }} - {% endif %}Endless Movie Clip - 영화 대사 검색{% endblock title %}</title>
+
+<!-- Meta 태그 -->
+<meta name="description" content="{% block description %}영화 속 실제 대사를 검색하고 클립으로 감상하세요. playphrase.me와 IMDB 데이터를 활용한 한글 번역 서비스{% endblock description %}">
+<meta name="keywords" content="{% block keywords %}영화, 대사, 클립, 번역, 검색, playphrase, 영어학습{% endblock keywords %}">
+<meta name="csrf-token" content="{{ csrf_token }}">
+
+<!-- 외부 CSS 라이브러리 -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+<!-- 사용자 정의 CSS -->
+<link rel="stylesheet" href="{% static 'css/main.css' %}">
+
+<!-- 페이지별 추가 CSS -->
+{% block extra_css %}{% endblock extra_css %}
+
+<!-- 구조화된 데이터 -->
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "플레이프레이즈",
+    "description": "영화 속 실제 대사를 검색하고 클립으로 감상하세요",
+    "url": "{{ request.build_absolute_uri }}",
+    "applicationCategory": "Entertainment",
+    "operatingSystem": "Web"
+}
+</script>

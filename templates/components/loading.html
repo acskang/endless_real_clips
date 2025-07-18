@@ -1,0 +1,50 @@
+<!-- 로딩 오버레이 (새로운 검색어 처리 시) -->
+<div id="search-loading-overlay" class="position-fixed top-0 start-0 w-100 h-100 d-none" style="z-index: 2000; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(5px);">
+    <div class="d-flex flex-column align-items-center justify-content-center h-100">
+        <!-- 메인 로딩 스피너 -->
+        <div class="loading-spinner mb-4">
+            <div class="spinner-ring">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+        </div>
+        
+        <!-- 로딩 메시지 -->
+        <div class="text-center">
+            <h4 id="loading-title" class="text-white mb-3">새로운 영화 대사를 찾고 있습니다...</h4>
+            <p id="loading-message" class="text-light opacity-75 mb-4">외부 API에서 데이터를 가져오는 중입니다</p>
+            
+            <!-- 진행 단계 표시 -->
+            <div class="loading-steps">
+                <div class="step" id="step-search">
+                    <i class="fas fa-search step-icon"></i>
+                    <span class="step-text">검색 중...</span>
+                </div>
+                <div class="step" id="step-fetch">
+                    <i class="fas fa-cloud-download-alt step-icon"></i>
+                    <span class="step-text">데이터 가져오는 중...</span>
+                </div>
+                <div class="step" id="step-process">
+                    <i class="fas fa-cogs step-icon"></i>
+                    <span class="step-text">데이터 처리 중...</span>
+                </div>
+                <div class="step" id="step-save">
+                    <i class="fas fa-save step-icon"></i>
+                    <span class="step-text">저장 중...</span>
+                </div>
+            </div>
+            
+            <!-- 프로그레스 바 -->
+            <div class="progress mt-4" style="height: 6px; width: 300px; margin: 0 auto;">
+                <div id="search-progress" class="progress-bar bg-primary progress-bar-striped progress-bar-animated" 
+                     role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                </div>
+            </div>
+            
+            <!-- 예상 시간 -->
+            <small class="text-muted mt-3 d-block">예상 소요 시간: 5-10초</small>
+        </div>
+    </div>
+</div>

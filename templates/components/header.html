@@ -1,0 +1,154 @@
+{% load static %}
+
+<!-- 네비게이션 바 -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary mb-4">
+    <div class="container">
+        <!-- Home 버튼 (왼쪽) -->
+        <a class="btn btn-outline-light me-3" href="{% url 'phrase:home' %}">
+            <i class="fas fa-home me-2"></i>Home
+        </a>
+        
+        <!-- 모바일 토글 버튼 -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <!-- 네비게이션 메뉴 -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <!-- 오른쪽 정렬된 버튼들 -->
+            <div class="ms-auto d-flex gap-2">
+                <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#signupModal">
+                    <i class="fas fa-user-plus me-1"></i>Sign Up
+                </button>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#loginModal">
+                    <i class="fas fa-sign-in-alt me-1"></i>Login
+                </button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- 헤더 섹션 -->
+<header class="text-center mb-5">
+    <div class="d-flex align-items-center justify-content-center gap-4 mb-4">
+        <!-- 프로필 이미지 -->
+        <img
+            src="{% static 'img/cskang.jpg' %}"
+            alt="Profile"
+            class="profile-image rounded-circle border border-3 border-light shadow-lg"
+            onclick="location.href='{% url 'phrase:index' %}'"
+            onerror="this.outerHTML='<div class=\'profile-image rounded-circle bg-primary d-flex align-items-center justify-content-center\' style=\'font-size: 2rem;\'>🎬</div>'"
+        />
+        
+        <!-- 제목 및 설명 -->
+        <div class="d-flex flex-column text-start">
+            <p class="display-2 fw-bold text-gradient mb-2">Movie Clips</p>
+            <p class="lead text-light opacity-75 mb-0">영화 속 실제 대사를 검색하고 클립으로 감상하세요</p>
+        </div>
+    </div>
+</header>
+
+<!-- Sign Up 모달 -->
+<div class="modal fade" id="signupModal" tabindex="-1" aria-labelledby="signupModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title" id="signupModalLabel">
+                    <i class="fas fa-user-plus me-2"></i>회원가입
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="signupForm">
+                    <div class="mb-3">
+                        <label for="signupEmail" class="form-label">이메일</label>
+                        <input type="email" class="form-control bg-dark text-light border-secondary" id="signupEmail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="signupPassword" class="form-label">비밀번호</label>
+                        <input type="password" class="form-control bg-dark text-light border-secondary" id="signupPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="signupPasswordConfirm" class="form-label">비밀번호 확인</label>
+                        <input type="password" class="form-control bg-dark text-light border-secondary" id="signupPasswordConfirm" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary">가입하기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Login 모달 -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title" id="loginModalLabel">
+                    <i class="fas fa-sign-in-alt me-2"></i>로그인
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="loginForm">
+                    <div class="mb-3">
+                        <label for="loginEmail" class="form-label">이메일</label>
+                        <input type="email" class="form-control bg-dark text-light border-secondary" id="loginEmail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="loginPassword" class="form-label">비밀번호</label>
+                        <input type="password" class="form-control bg-dark text-light border-secondary" id="loginPassword" required>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="rememberMe">
+                        <label class="form-check-label" for="rememberMe">로그인 상태 유지</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary">로그인</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* 네비게이션 바 스타일 개선 */
+.navbar .btn {
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.navbar .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* 모달 스타일 개선 */
+.modal-content {
+    border: 1px solid #495057;
+}
+
+.form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* 반응형 네비게이션 */
+@media (max-width: 991.98px) {
+    .navbar .d-flex {
+        flex-direction: column;
+        gap: 0.5rem !important;
+        margin-top: 1rem;
+        width: 100%;
+    }
+    
+    .navbar .btn {
+        width: 100%;
+    }
+}
+</style>

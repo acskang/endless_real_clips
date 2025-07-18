@@ -1,0 +1,453 @@
+<!-- 검색 폼 섹션: 디버그 버전 (입력값 전송 문제 해결) -->
+<section class="search-section mb-5">
+    <form id="search-form" method="POST" action="{% url 'phrase:process_text' %}">
+        {% csrf_token %}
+        
+        <!-- 🔍 디버그: 현재 값 표시 -->
+        <div class="bg-info text-dark p-2 mb-3 rounded d-none" id="debug-info">
+            <small>
+                <strong>디버그 정보:</strong><br>
+                데스크톱 입력: <span id="debug-desktop"></span><br>
+                모바일 입력: <span id="debug-mobile"></span><br>
+                통합 필드: <span id="debug-unified"></span>
+            </small>
+        </div>
+        
+        <!-- 숨겨진 통합 입력 필드 (실제 서버로 전송) - 디버그 개선 -->
+        <input type="hidden" id="unified-search-input" name="user_text" value="{{ message|default:'' }}">
+        
+        <!-- 데스크톱용 검색바 (md 이상) -->
+        <div class="d-none d-md-block">
+            <div class="input-group input-group-lg">
+                <span class="input-group-text bg-dark border-secondary px-3">
+                    <i class="fas fa-search text-primary"></i>
+                </span>
+                <input 
+                    type="text" 
+                    id="search-input-desktop"
+                    class="form-control bg-dark border-secondary text-white"
+                    placeholder="한글 또는 영어 구문을 입력하세요... (최대 500자)"
+                    value="{{ message|default:'' }}"
+                    autocomplete="off"
+                    autofocus
+                    maxlength="500"
+                    aria-label="검색어 입력"
+                />
+                <button type="button" id="clear-search-desktop" class="btn btn-outline-secondary {% if not message %}d-none{% endif %}">
+                    <i class="fas fa-times"></i>
+                </button>
+                <button 
+                    type="submit" 
+                    class="btn btn-primary px-4"
+                    aria-label="검색 실행"
+                >
+                    <i class="fas fa-search me-2"></i>검색
+                </button>
+            </div>
+        </div>
+        
+        <!-- 모바일/태블릿용 검색바 (sm 이하) -->
+        <div class="d-md-none">
+            <!-- 검색 입력창 -->
+            <div class="position-relative mb-2">
+                <input 
+                    type="text" 
+                    id="search-input-mobile"
+                    class="form-control form-control-lg bg-dark border-secondary text-white ps-5 pe-5"
+                    placeholder="검색어 입력... (최대 500자)"
+                    value="{{ message|default:'' }}"
+                    autocomplete="off"
+                    maxlength="500"
+                    aria-label="검색어 입력"
+                    style="padding-right: 4rem !important;"
+                />
+                <!-- 왼쪽 돋보기 아이콘 -->
+                <div class="position-absolute top-50 start-0 translate-middle-y ps-3" style="pointer-events: none;">
+                    <i class="fas fa-search text-primary"></i>
+                </div>
+                <!-- 오른쪽 지우기 버튼 -->
+                <button 
+                    type="button" 
+                    id="clear-search-mobile" 
+                    class="btn btn-link position-absolute top-50 end-0 translate-middle-y pe-3 text-secondary {% if not message %}d-none{% endif %}"
+                    style="border: none; background: none; z-index: 10;"
+                    aria-label="검색어 지우기"
+                >
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <!-- 검색 버튼 -->
+            <div class="d-grid">
+                <button 
+                    type="submit" 
+                    class="btn btn-primary btn-lg"
+                    aria-label="검색 실행"
+                >
+                    <i class="fas fa-search me-2"></i>검색하기
+                </button>
+            </div>
+        </div>
+        
+        <!-- 🔧 디버그 버튼들 -->
+        <div class="mt-2 d-flex gap-2">
+            <button type="button" id="toggle-debug" class="btn btn-outline-warning btn-sm">
+                <i class="fas fa-bug"></i> 디버그 모드
+            </button>
+            <button type="button" id="manual-sync" class="btn btn-outline-info btn-sm">
+                <i class="fas fa-sync"></i> 수동 동기화
+            </button>
+        </div>
+        
+        <!-- 검색 옵션 (기존과 동일) -->
+        <div class="row mt-3 g-2">
+            <div class="col-sm-6">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="include-korean" checked>
+                    <label class="form-check-label text-light small" for="include-korean">
+                        <i class="fas fa-language me-1"></i>한글 번역 포함 검색
+                    </label>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="exact-match">
+                    <label class="form-check-label text-light small" for="exact-match">
+                        <i class="fas fa-bullseye me-1"></i>정확한 문구만 검색
+                    </label>
+                </div>
+            </div>
+        </div>
+    </form>
+    
+    <!-- 빠른 검색 버튼들 (모바일에서만 표시) - 디버그 개선 -->
+    <div class="d-md-none mt-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <small class="text-muted">
+                <i class="fas fa-bolt me-1"></i>빠른 검색 (디버그용)
+            </small>
+        </div>
+        <div class="d-flex flex-wrap gap-2" id="quick-search-buttons">
+            <button type="button" class="btn btn-outline-primary btn-sm quick-search-btn" data-query="hello">
+                "hello"
+            </button>
+            <button type="button" class="btn btn-outline-primary btn-sm quick-search-btn" data-query="can you pick me up">
+                "can you pick me up"
+            </button>
+            <button type="button" class="btn btn-outline-primary btn-sm quick-search-btn" data-query="just drop it">
+                "just drop it"
+            </button>
+            <button type="button" class="btn btn-outline-primary btn-sm quick-search-btn" data-query="테스트">
+                "테스트"
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- 디버그용 JavaScript (임시) -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔍 검색 폼 디버그 스크립트 로드');
+    
+    // 핵심 요소들
+    const desktopInput = document.getElementById('search-input-desktop');
+    const mobileInput = document.getElementById('search-input-mobile');
+    const unifiedInput = document.getElementById('unified-search-input');
+    const searchForm = document.getElementById('search-form');
+    const debugInfo = document.getElementById('debug-info');
+    const toggleDebug = document.getElementById('toggle-debug');
+    const manualSync = document.getElementById('manual-sync');
+    
+    // 디버그 정보 업데이트
+    function updateDebugInfo() {
+        const desktopValue = desktopInput ? desktopInput.value : 'null';
+        const mobileValue = mobileInput ? mobileInput.value : 'null';
+        const unifiedValue = unifiedInput ? unifiedInput.value : 'null';
+        
+        document.getElementById('debug-desktop').textContent = `"${desktopValue}"`;
+        document.getElementById('debug-mobile').textContent = `"${mobileValue}"`;
+        document.getElementById('debug-unified').textContent = `"${unifiedValue}"`;
+        
+        console.log('🔍 DEBUG VALUES:', {
+            desktop: desktopValue,
+            mobile: mobileValue,
+            unified: unifiedValue
+        });
+    }
+    
+    // 입력값 동기화 함수 (개선된 버전)
+    function syncInputs() {
+        console.log('🔄 입력값 동기화 시작');
+        
+        let currentValue = '';
+        
+        // 현재 활성 화면에 따라 값 결정
+        if (window.innerWidth >= 768) {
+            // 데스크톱 모드
+            currentValue = desktopInput ? desktopInput.value.trim() : '';
+            console.log('💻 데스크톱 모드 입력:', currentValue);
+        } else {
+            // 모바일 모드
+            currentValue = mobileInput ? mobileInput.value.trim() : '';
+            console.log('📱 모바일 모드 입력:', currentValue);
+        }
+        
+        // 통합 필드에 값 설정
+        if (unifiedInput) {
+            unifiedInput.value = currentValue;
+            console.log('🔗 통합 필드 업데이트:', currentValue);
+        }
+        
+        updateDebugInfo();
+        return currentValue;
+    }
+    
+    // 이벤트 리스너 등록
+    if (desktopInput) {
+        desktopInput.addEventListener('input', function() {
+            console.log('💻 데스크톱 입력 변경:', this.value);
+            syncInputs();
+        });
+    }
+    
+    if (mobileInput) {
+        mobileInput.addEventListener('input', function() {
+            console.log('📱 모바일 입력 변경:', this.value);
+            syncInputs();
+        });
+    }
+    
+    // 폼 제출 시 최종 검증
+    if (searchForm) {
+        searchForm.addEventListener('submit', function(e) {
+            console.log('📝 폼 제출 시작');
+            
+            // 최종 동기화
+            const finalValue = syncInputs();
+            
+            console.log('📋 최종 제출값:', finalValue);
+            
+            // 빈 값 체크
+            if (!finalValue) {
+                console.warn('⚠️ 빈 값 제출 방지');
+                e.preventDefault();
+                alert('검색어를 입력해주세요.');
+                return false;
+            }
+            
+            console.log('✅ 폼 제출 진행');
+        });
+    }
+    
+    // 디버그 모드 토글
+    if (toggleDebug) {
+        toggleDebug.addEventListener('click', function() {
+            debugInfo.classList.toggle('d-none');
+            updateDebugInfo();
+        });
+    }
+    
+    // 수동 동기화
+    if (manualSync) {
+        manualSync.addEventListener('click', function() {
+            syncInputs();
+            alert('동기화 완료!');
+        });
+    }
+    
+    // 빠른 검색 버튼
+    document.querySelectorAll('.quick-search-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const query = this.dataset.query;
+            console.log('⚡ 빠른 검색:', query);
+            
+            // 모든 입력창에 값 설정
+            if (desktopInput) desktopInput.value = query;
+            if (mobileInput) mobileInput.value = query;
+            if (unifiedInput) unifiedInput.value = query;
+            
+            updateDebugInfo();
+            
+            // 폼 제출
+            searchForm.submit();
+        });
+    });
+    
+    // 초기 동기화
+    setTimeout(() => {
+        syncInputs();
+        console.log('🚀 검색 폼 디버그 초기화 완료');
+    }, 100);
+});
+</script>
+
+<!-- 검색 폼에 추가할 로딩 애니메이션 JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔍 로딩 애니메이션 초기화');
+    
+    const searchForm = document.getElementById('search-form');
+    const loadingOverlay = document.getElementById('search-loading-overlay');
+    
+    // 검색 기록 (간단한 메모리 저장)
+    let searchHistory = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+    
+    // 새로운 검색어인지 확인
+    function isNewSearchQuery(query) {
+        const trimmedQuery = query.trim().toLowerCase();
+        const isNew = !searchHistory.includes(trimmedQuery);
+        console.log(`🔍 검색어 "${trimmedQuery}" 새로운가요?`, isNew);
+        return isNew;
+    }
+    
+    // 로딩 애니메이션 표시
+    function showSearchLoadingAnimation() {
+        console.log('🎬 로딩 애니메이션 시작');
+        if (loadingOverlay) {
+            loadingOverlay.classList.remove('d-none');
+            document.body.style.overflow = 'hidden'; // 스크롤 방지
+            
+            // 단계별 애니메이션
+            startLoadingSteps();
+        }
+    }
+    
+    // 로딩 애니메이션 숨김
+    function hideSearchLoadingAnimation() {
+        console.log('🎬 로딩 애니메이션 종료');
+        if (loadingOverlay) {
+            loadingOverlay.classList.add('d-none');
+            document.body.style.overflow = ''; // 스크롤 복원
+        }
+    }
+    
+    // 4단계 로딩 진행 애니메이션
+    function startLoadingSteps() {
+        const steps = [
+            { id: 'step-search', title: '검색 중...', message: '검색어를 분석하고 있습니다', delay: 0 },
+            { id: 'step-fetch', title: '데이터 가져오는 중...', message: '외부 API에서 영화 정보를 수집하고 있습니다', delay: 2000 },
+            { id: 'step-process', title: '데이터 처리 중...', message: '영화 대사와 번역을 처리하고 있습니다', delay: 5000 },
+            { id: 'step-save', title: '저장 중...', message: '결과를 데이터베이스에 저장하고 있습니다', delay: 8000 }
+        ];
+        
+        const loadingTitle = document.getElementById('loading-title');
+        const loadingMessage = document.getElementById('loading-message');
+        const progressBar = document.getElementById('search-progress');
+        
+        // 프로그레스 바 애니메이션
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+            progress += Math.random() * 10;
+            if (progress > 95) progress = 95; // 95%에서 멈춤 (완료는 페이지 로드 후)
+            
+            if (progressBar) {
+                progressBar.style.width = progress + '%';
+                progressBar.setAttribute('aria-valuenow', progress);
+            }
+        }, 300);
+        
+        // 단계별 메시지 변경
+        steps.forEach((step, index) => {
+            setTimeout(() => {
+                // 이전 단계들을 완료로 표시
+                for (let i = 0; i < index; i++) {
+                    const prevStep = document.getElementById(steps[i].id);
+                    if (prevStep) {
+                        prevStep.classList.remove('active');
+                        prevStep.classList.add('completed');
+                    }
+                }
+                
+                // 현재 단계를 활성화
+                const currentStep = document.getElementById(step.id);
+                if (currentStep) {
+                    currentStep.classList.add('active');
+                }
+                
+                // 메시지 업데이트
+                if (loadingTitle) loadingTitle.textContent = step.title;
+                if (loadingMessage) loadingMessage.textContent = step.message;
+                
+                console.log(`📍 로딩 단계 ${index + 1}: ${step.title}`);
+            }, step.delay);
+        });
+        
+        // 15초 후 강제 종료 (안전장치)
+        setTimeout(() => {
+            console.log('⏰ 로딩 타임아웃 - 강제 종료');
+            clearInterval(progressInterval);
+            hideSearchLoadingAnimation();
+        }, 15000);
+    }
+    
+    // 검색 기록에 추가
+    function addToSearchHistory(query) {
+        const trimmedQuery = query.trim().toLowerCase();
+        if (trimmedQuery && !searchHistory.includes(trimmedQuery)) {
+            searchHistory.push(trimmedQuery);
+            // 최대 50개까지만 저장
+            if (searchHistory.length > 50) {
+                searchHistory = searchHistory.slice(-50);
+            }
+            localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
+            console.log('📝 검색 기록에 추가:', trimmedQuery);
+        }
+    }
+    
+    // 폼 제출 이벤트
+    if (searchForm) {
+        searchForm.addEventListener('submit', function(e) {
+            console.log('📝 검색 폼 제출 감지');
+            
+            // 입력값 가져오기
+            let searchQuery = '';
+            if (window.innerWidth >= 768) {
+                // 데스크톱
+                const desktopInput = document.getElementById('search-input-desktop');
+                searchQuery = desktopInput ? desktopInput.value.trim() : '';
+            } else {
+                // 모바일
+                const mobileInput = document.getElementById('search-input-mobile');
+                searchQuery = mobileInput ? mobileInput.value.trim() : '';
+            }
+            
+            console.log('🔍 검색어:', searchQuery);
+            
+            // 빈 검색어 체크
+            if (!searchQuery) {
+                console.warn('⚠️ 빈 검색어 - 로딩 애니메이션 표시 안함');
+                return;
+            }
+            
+            // 새로운 검색어인지 확인
+            if (isNewSearchQuery(searchQuery)) {
+                console.log('🆕 새로운 검색어 감지 - 로딩 애니메이션 시작');
+                showSearchLoadingAnimation();
+                
+                // 검색 기록에 추가 (미리 추가)
+                addToSearchHistory(searchQuery);
+            } else {
+                console.log('♻️ 기존 검색어 - 로딩 애니메이션 건너뜀');
+            }
+        });
+    }
+    
+    // 페이지 로드 완료 시 로딩 숨김
+    window.addEventListener('load', function() {
+        setTimeout(() => {
+            hideSearchLoadingAnimation();
+            console.log('✅ 페이지 로드 완료 - 로딩 애니메이션 종료');
+        }, 500);
+    });
+    
+    // Escape 키로 로딩 취소
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && loadingOverlay && !loadingOverlay.classList.contains('d-none')) {
+            console.log('⎋ Escape 키로 로딩 취소');
+            hideSearchLoadingAnimation();
+        }
+    });
+    
+    console.log('🚀 로딩 애니메이션 시스템 준비 완료');
+});
+</script>

@@ -1,0 +1,538 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}시스템 디버그 정보 - PlayPhrase{% endblock %}
+
+{% block extra_css %}
+<style>
+.debug-container {
+    background: linear-gradient(135deg, #1a1a1a, #2c3e50);
+    min-height: 100vh;
+    padding: 20px 0;
+}
+
+.debug-card {
+    background: rgba(52, 73, 94, 0.9);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.debug-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    border-color: rgba(255,255,255,0.2);
+}
+
+.section-header {
+    background: linear-gradient(45deg, #e74c3c, #c0392b);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 10px 10px 0 0;
+    margin: -1px -1px 20px -1px;
+    font-weight: bold;
+}
+
+.info-row {
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    color: #3498db;
+    font-weight: bold;
+    min-width: 150px;
+}
+
+.info-value {
+    color: #ecf0f1;
+    word-break: break-all;
+}
+
+.status-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.status-ok { background-color: #2ecc71; }
+.status-warning { background-color: #f39c12; }
+.status-error { background-color: #e74c3c; }
+
+.code-block {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 15px;
+    font-family: 'Courier New', monospace;
+    color: #2ecc71;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.metric-card {
+    background: linear-gradient(145deg, #34495e, #2c3e50);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    color: white;
+    transition: transform 0.3s ease;
+}
+
+.metric-card:hover {
+    transform: scale(1.05);
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.metric-label {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.refresh-btn {
+    background: linear-gradient(45deg, #9b59b6, #8e44ad);
+    border: none;
+    border-radius: 25px;
+    color: white;
+    padding: 12px 30px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.refresh-btn:hover {
+    background: linear-gradient(45deg, #8e44ad, #7d3c98);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(155, 89, 182, 0.4);
+    color: white;
+}
+
+.table-dark-custom {
+    background: rgba(52, 73, 94, 0.8);
+    color: #ecf0f1;
+}
+
+.table-dark-custom th {
+    background: rgba(44, 62, 80, 0.9);
+    border-color: rgba(255,255,255,0.2);
+    color: #3498db;
+}
+
+.table-dark-custom td {
+    border-color: rgba(255,255,255,0.1);
+    padding: 12px;
+}
+
+.log-entry {
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+}
+
+.log-info { background: rgba(52, 152, 219, 0.2); border-left: 4px solid #3498db; }
+.log-warning { background: rgba(243, 156, 18, 0.2); border-left: 4px solid #f39c12; }
+.log-error { background: rgba(231, 76, 60, 0.2); border-left: 4px solid #e74c3c; }
+.log-success { background: rgba(46, 204, 113, 0.2); border-left: 4px solid #2ecc71; }
+
+.tab-content-custom {
+    background: rgba(52, 73, 94, 0.9);
+    border-radius: 0 0 15px 15px;
+    padding: 20px;
+}
+
+.nav-tabs-custom .nav-link {
+    background: rgba(44, 62, 80, 0.8);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #bdc3c7;
+    border-radius: 10px 10px 0 0;
+    margin-right: 5px;
+}
+
+.nav-tabs-custom .nav-link.active {
+    background: rgba(52, 73, 94, 0.9);
+    color: #3498db;
+    border-bottom-color: rgba(52, 73, 94, 0.9);
+}
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="debug-container">
+    <div class="container-fluid">
+        <!-- 헤더 -->
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <h1 class="display-4 text-white mb-3">
+                    <i class="fas fa-bug me-3"></i>시스템 디버그 정보
+                </h1>
+                <p class="lead text-muted">서버 상태, 데이터베이스, 성능 지표를 확인하세요</p>
+                <button onclick="location.reload()" class="refresh-btn">
+                    <i class="fas fa-sync-alt me-2"></i>새로고침
+                </button>
+            </div>
+        </div>
+
+        <!-- 핵심 지표 -->
+        <div class="row g-4 mb-5">
+            <div class="col-lg-3 col-md-6">
+                <div class="metric-card">
+                    <div class="metric-value">{{ debug_info.database.total_dialogues|default:0 }}</div>
+                    <div class="metric-label">총 대사 수</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="metric-card">
+                    <div class="metric-value">{{ debug_info.database.total_movies|default:0 }}</div>
+                    <div class="metric-label">총 영화 수</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="metric-card">
+                    <div class="metric-value">{{ debug_info.performance.avg_response_time|floatformat:2|default:0 }}ms</div>
+                    <div class="metric-label">평균 응답시간</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="metric-card">
+                    <div class="metric-value">{{ debug_info.cache.hit_rate|floatformat:1|default:0 }}%</div>
+                    <div class="metric-label">캐시 적중률</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 탭 네비게이션 -->
+        <div class="row">
+            <div class="col-12">
+                <ul class="nav nav-tabs nav-tabs-custom" id="debugTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="system-tab" data-bs-toggle="tab" data-bs-target="#system" type="button" role="tab">
+                            <i class="fas fa-server me-2"></i>시스템 정보
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="database-tab" data-bs-toggle="tab" data-bs-target="#database" type="button" role="tab">
+                            <i class="fas fa-database me-2"></i>데이터베이스
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="performance-tab" data-bs-toggle="tab" data-bs-target="#performance" type="button" role="tab">
+                            <i class="fas fa-tachometer-alt me-2"></i>성능
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="logs-tab" data-bs-toggle="tab" data-bs-target="#logs" type="button" role="tab">
+                            <i class="fas fa-file-alt me-2"></i>로그
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content tab-content-custom" id="debugTabContent">
+                    <!-- 시스템 정보 탭 -->
+                    <div class="tab-pane fade show active" id="system" role="tabpanel">
+                        <div class="row g-4">
+                            <div class="col-lg-6">
+                                <div class="debug-card p-4">
+                                    <div class="section-header">
+                                        <i class="fas fa-info-circle me-2"></i>서버 정보
+                                    </div>
+                                    <div class="info-row d-flex">
+                                        <span class="info-label">Python 버전:</span>
+                                        <span class="info-value ms-3">{{ debug_info.system.python_version|default:"Unknown" }}</span>
+                                    </div>
+                                    <div class="info-row d-flex">
+                                        <span class="info-label">Django 버전:</span>
+                                        <span class="info-value ms-3">{{ debug_info.system.django_version|default:"Unknown" }}</span>
+                                    </div>
+                                    <div class="info-row d-flex">
+                                        <span class="info-label">서버 시간:</span>
+                                        <span class="info-value ms-3">{{ debug_info.system.server_time|default:"Unknown" }}</span>
+                                    </div>
+                                    <div class="info-row d-flex">
+                                        <span class="info-label">업타임:</span>
+                                        <span class="info-value ms-3">{{ debug_info.system.uptime|default:"Unknown" }}</span>
+                                    </div>
+                                    <div class="info-row d-flex">
+                                        <span class="info-label">메모리 사용량:</span>
+                                        <span class="info-value ms-3">{{ debug_info.system.memory_usage|default:"Unknown" }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-lg-6">
+                                <div class="debug-card p-4">
+                                    <div class="section-header">
+                                        <i class="fas fa-cog me-2"></i>Django 설정
+                                    </div>
+                                    <div class="info-row d-flex">
+                                        <span class="info-label">DEBUG 모드:</span>
+                                        <span class="info-value ms-3">
+                                            <span class="status-indicator {% if debug_info.settings.debug %}status-warning{% else %}status-ok{% endif %}"></span>
+                                            {{ debug_info.settings.debug|yesno:"ON,OFF" }}
+                                        </span>
+                                    </div>
+                                    <div class="info-row d-flex">
+                                        <span class="info-label">데이터베이스:</span>
+                                        <span class="info-value ms-3">{{ debug_info.settings.database_engine|default:"Unknown" }}</span>
+                                    </div>
+                                    <div class="info-row d-flex">
+                                        <span class="info-label">캐시 백엔드:</span>
+                                        <span class="info-value ms-3">{{ debug_info.settings.cache_backend|default:"Unknown" }}</span>
+                                    </div>
+                                    <div class="info-row d-flex">
+                                        <span class="info-label">타임존:</span>
+                                        <span class="info-value ms-3">{{ debug_info.settings.timezone|default:"Unknown" }}</span>
+                                    </div>
+                                    <div class="info-row d-flex">
+                                        <span class="info-label">언어:</span>
+                                        <span class="info-value ms-3">{{ debug_info.settings.language_code|default:"Unknown" }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 데이터베이스 탭 -->
+                    <div class="tab-pane fade" id="database" role="tabpanel">
+                        <div class="row g-4">
+                            <div class="col-12">
+                                <div class="debug-card p-4">
+                                    <div class="section-header">
+                                        <i class="fas fa-table me-2"></i>테이블 통계
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-dark-custom">
+                                            <thead>
+                                                <tr>
+                                                    <th>테이블명</th>
+                                                    <th>레코드 수</th>
+                                                    <th>상태</th>
+                                                    <th>마지막 업데이트</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% if debug_info.database.tables %}
+                                                    {% for table in debug_info.database.tables %}
+                                                    <tr>
+                                                        <td>{{ table.name }}</td>
+                                                        <td>{{ table.count|default:"-" }}</td>
+                                                        <td>
+                                                            <span class="status-indicator status-ok"></span>
+                                                            {{ table.status|default:"OK" }}
+                                                        </td>
+                                                        <td>{{ table.last_updated|default:"-" }}</td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    <tr>
+                                                        <td>DialogueTable</td>
+                                                        <td>{{ debug_info.database.total_dialogues|default:"-" }}</td>
+                                                        <td><span class="status-indicator status-ok"></span>OK</td>
+                                                        <td>{{ debug_info.system.server_time|default:"-" }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Movie</td>
+                                                        <td>{{ debug_info.database.total_movies|default:"-" }}</td>
+                                                        <td><span class="status-indicator status-ok"></span>OK</td>
+                                                        <td>{{ debug_info.system.server_time|default:"-" }}</td>
+                                                    </tr>
+                                                {% endif %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 성능 탭 -->
+                    <div class="tab-pane fade" id="performance" role="tabpanel">
+                        <div class="row g-4">
+                            <div class="col-lg-6">
+                                <div class="debug-card p-4">
+                                    <div class="section-header">
+                                        <i class="fas fa-chart-line me-2"></i>응답 시간 통계
+                                    </div>
+                                    <div class="info-row d-flex">
+                                        <span class="info-label">평균 응답시간:</span>
+                                        <span class="info-value ms-3">{{ debug_info.performance.avg_response_time|floatformat:2|default:0 }}ms</span>
+                                    </div>
+                                    <div class="info-row d-flex">
+                                        <span class="info-label">최소 응답시간:</span>
+                                        <span class="info-value ms-3">{{ debug_info.performance.min_response_time|floatformat:2|default:0 }}ms</span>
+                                    </div>
+                                    <div class="info-row d-flex">
+                                        <span class="info-label">최대 응답시간:</span>
+                                        <span class="info-value ms-3">{{ debug_info.performance.max_response_time|floatformat:2|default:0 }}ms</span>
+                                    </div>
+                                    <div class="info-row d-flex">
+                                        <span class="info-label">총 요청 수:</span>
+                                        <span class="info-value ms-3">{{ debug_info.performance.total_requests|default:0 }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-lg-6">
+                                <div class="debug-card p-4">
+                                    <div class="section-header">
+                                        <i class="fas fa-memory me-2"></i>캐시 통계
+                                    </div>
+                                    <div class="info-row d-flex">
+                                        <span class="info-label">캐시 적중률:</span>
+                                        <span class="info-value ms-3">{{ debug_info.cache.hit_rate|floatformat:1|default:0 }}%</span>
+                                    </div>
+                                    <div class="info-row d-flex">
+                                        <span class="info-label">캐시 항목 수:</span>
+                                        <span class="info-value ms-3">{{ debug_info.cache.total_keys|default:0 }}</span>
+                                    </div>
+                                    <div class="info-row d-flex">
+                                        <span class="info-label">캐시 사용량:</span>
+                                        <span class="info-value ms-3">{{ debug_info.cache.memory_usage|default:"Unknown" }}</span>
+                                    </div>
+                                    <div class="info-row d-flex">
+                                        <span class="info-label">캐시 만료:</span>
+                                        <span class="info-value ms-3">{{ debug_info.cache.expired_keys|default:0 }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 로그 탭 -->
+                    <div class="tab-pane fade" id="logs" role="tabpanel">
+                        <div class="debug-card p-4">
+                            <div class="section-header">
+                                <i class="fas fa-terminal me-2"></i>최근 로그 (최근 50개)
+                            </div>
+                            <div class="code-block" style="max-height: 500px;">
+                                {% if debug_info.logs %}
+                                    {% for log in debug_info.logs %}
+                                        <div class="log-entry log-{{ log.level|lower }}">
+                                            [{{ log.timestamp }}] {{ log.level|upper }}: {{ log.message }}
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="log-entry log-info">
+                                        [{{ debug_info.system.server_time }}] INFO: 시스템이 정상적으로 작동 중입니다.
+                                    </div>
+                                    <div class="log-entry log-success">
+                                        [{{ debug_info.system.server_time }}] SUCCESS: 디버그 정보가 성공적으로 로드되었습니다.
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 돌아가기 버튼 -->
+        <div class="row mt-5">
+            <div class="col-12 text-center">
+                <a href="{% url 'phrase:index' %}" class="btn btn-outline-light btn-lg">
+                    <i class="fas fa-arrow-left me-2"></i>검색 페이지로 돌아가기
+                </a>
+            </div>
+        </div>
+
+        <!-- 에러 정보 (있을 경우) -->
+        {% if error %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    {{ error }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 탭 전환 애니메이션
+    const tabButtons = document.querySelectorAll('[data-bs-toggle="tab"]');
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const target = this.getAttribute('data-bs-target');
+            console.log(`🔧 DEBUG: 탭 전환 - ${target}`);
+        });
+    });
+
+    // 메트릭 카드 애니메이션
+    const metricCards = document.querySelectorAll('.metric-card');
+    metricCards.forEach((card, index) => {
+        setTimeout(() => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'all 0.5s ease';
+            
+            setTimeout(() => {
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, 100);
+        }, index * 150);
+    });
+
+    // 상태 인디케이터 깜빡임 효과
+    const statusIndicators = document.querySelectorAll('.status-ok');
+    statusIndicators.forEach(indicator => {
+        setInterval(() => {
+            indicator.style.opacity = '0.5';
+            setTimeout(() => {
+                indicator.style.opacity = '1';
+            }, 500);
+        }, 3000);
+    });
+
+    // 자동 새로고침 (5분마다)
+    let autoRefreshInterval;
+    const startAutoRefresh = () => {
+        autoRefreshInterval = setInterval(() => {
+            console.log('🔄 DEBUG: 자동 새로고침 실행');
+            location.reload();
+        }, 300000); // 5분
+    };
+
+    // 마우스 활동 감지하여 자동 새로고침 시작/중지
+    let mouseActivity = false;
+    document.addEventListener('mousemove', () => {
+        if (!mouseActivity) {
+            mouseActivity = true;
+            clearInterval(autoRefreshInterval);
+            console.log('🖱️ DEBUG: 마우스 활동 감지 - 자동 새로고침 중지');
+            
+            setTimeout(() => {
+                mouseActivity = false;
+                startAutoRefresh();
+                console.log('⏰ DEBUG: 자동 새로고침 재시작');
+            }, 60000); // 1분 후
+        }
+    });
+
+    // 초기 자동 새로고침 시작
+    startAutoRefresh();
+
+    console.log('🐛 DEBUG: 디버그 페이지 로드 완료');
+    console.log('📊 DEBUG: 메트릭 카드 수:', metricCards.length);
+    console.log('🎯 DEBUG: 상태 인디케이터 수:', statusIndicators.length);
+});
+</script>
+{% endblock extra_js %}

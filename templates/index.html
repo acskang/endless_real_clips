@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if message %}{{ message }} - {% endif %}플레이프레이즈 - 영화 대사 검색{% endblock title %}
+
+{% block content %}
+    <!-- 헤더 섹션 -->
+    {% include 'components/header.html' %}
+
+    <!-- 설명 섹션 -->
+    {% include 'components/info_section.html' %}
+
+    <!-- 검색 폼 -->
+    {% include 'components/search_form.html' %}
+
+    <!-- 입력 확인 모달-->
+    {% include 'partials/confirmation_modal.html' %}
+
+    <!-- 오류 표시 -->
+    {% include 'components/error_section.html' %}
+
+    <!-- 검색 결과 정보 -->
+    {% include 'components/search_result_info.html' %}
+
+    <!-- 영화 카드 섹션 -->
+    {% include 'components/movies_section.html' %}
+
+    <!-- 스크립트 섹션 -->
+    {% include 'components/scripts.html' %}
+
+    <!-- 인기 검색어 섹션 -->
+    {% include 'components/popular_section.html' %}
+
+    <!-- 통계 섹션 -->
+    {% include 'components/statistics_section.html' %}
+{% endblock content %}
+
+{% block extra_css %}
+<!-- 확인 모달 스타일 개선 -->
+<style>
+.suggestion-btn {
+    transition: all 0.2s ease;
+}
+
+.suggestion-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.modal-content.border-warning {
+    border-width: 2px;
+}
+
+.alert.border-warning {
+    border-width: 1px;
+}
+
+/* 입력 검증 관련 스타일 */
+.validation-warning {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* 제안 버튼 그리드 */
+.suggestions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.5rem;
+}
+
+/* 모바일 대응 */
+@media (max-width: 768px) {
+    .suggestions-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-dialog {
+        margin: 1rem;
+    }
+}
+</style>
+{% endblock extra_css %}
+
+{% block extra_js %}
+<!-- 입력 검증 관련 JavaScript -->
+<script>
+// 입력 검증 관련 유틸리티
+function showValidationToast(message, type = 'warning') {
+    // Bootstrap Toast 사용 (있는 경우)
+    if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
+        const toastHtml = `
+            <div class="toast align-items-center text-white bg-${type}" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `;
+        
+        // Toast 컨테이너에 추가
+        let toastContainer = document.getElementById('toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toast-container';
+            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+            document.body.appendChild(toastContainer);
+        }
+        
+        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+        
+        const toastElement = toastContainer.lastElementChild;
+        const toast = new bootstrap.Toast(toastElement);
+        toast.show();
+        
+        // 자동 제거
+        setTimeout(() => {
+            toastElement.remove();
+        }, 5000);
+    } else {
+        // Fallback: 간단한 alert
+        alert(message);
+    }
+}
+
+// 검색 폼 제출 시 기본 검증
+document.addEventListener('DOMContentLoaded', function() {
+    const searchForm = document.getElementById('search-form');
+    if (searchForm) {
+        searchForm.addEventListener('submit', function(e) {
+            const searchInput = document.getElementById('unified-search-input') || 
+                              document.getElementById('search-input-desktop') || 
+                              document.getElementById('search-input-mobile');
+            
+            if (searchInput) {
+                const value = searchInput.value.trim();
+                
+                // 클라이언트 사이드 기본 검증
+                if (!value) {
+                    e.preventDefault();
+                    showValidationToast('검색할 텍스트를 입력해주세요.', 'danger');
+                    searchInput.focus();
+                    return false;
+                }
+                
+                if (value.length > 500) {
+                    e.preventDefault();
+                    showValidationToast('검색어는 500자를 초과할 수 없습니다.', 'danger');
+                    searchInput.focus();
+                    return false;
+                }
+            }
+        });
+    }
+});
+
+// 키보드 단축키
+document.addEventListener('keydown', function(e) {
+    // Ctrl+Enter로 원본 검색 (확인 모달에서)
+    if (e.ctrlKey && e.key === 'Enter') {
+        const modal = document.getElementById('search-confirmation-modal');
+        if (modal && modal.classList.contains('show')) {
+            proceedWithOriginal();
+        }
+    }
+});
+</script>
+{% endblock extra_js %}

@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TheSysM - 혁신적 AI 협업 개발 방법론</title>
+    <meta name="description" content="TheSysM은 AI와 인간의 협업 개발 방법론을 통해 소프트웨어 엔지니어링을 혁신합니다. 검증된 11단계 방법론으로 개발 프로세스를 혁신하세요.">
+    <meta name="keywords" content="AI 개발, 협업 프로그래밍, 소프트웨어 방법론, 시스템 아키텍처, 프롬프트 엔지니어링, 애자일 개발">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --text-dark: #2c3e50;
+            --text-light: #7f8c8d;
+            --bg-light: #f8f9fa;
+            --bg-dark: #2c3e50;
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-medium: 0 8px 25px rgba(0, 0, 0, 0.15);
+            --shadow-heavy: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        body {
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+            line-height: 1.7;
+            color: var(--text-dark);
+            overflow-x: hidden;
+        }
+
+        /* 부드러운 스크롤 */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* 네비게이션 */
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(44, 62, 80, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            padding: 1rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .navbar.scrolled {
+            background: rgba(44, 62, 80, 0.98);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: white;
+            text-decoration: none;
+            background: var(--gradient-accent);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--secondary-color);
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        /* 모바일 메뉴 */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: white;
+            cursor: pointer;
+        }
+
+        /* 히어로 섹션 */
+        .hero {
+            height: 100vh;
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><radialGradient id="a" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="rgba(255,255,255,0.1)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></radialGradient></defs><circle cx="200" cy="200" r="100" fill="url(%23a)"/><circle cx="800" cy="300" r="150" fill="url(%23a)"/><circle cx="400" cy="700" r="80" fill="url(%23a)"/></svg>');
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+
+        .hero-content {
+            max-width: 1000px;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero h1 {
+            font-size: 3.2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            opacity: 0;
+            animation: fadeInUp 1s ease forwards 0.5s;
+            line-height: 1.3;
+        }
+
+        .hero .subtitle {
+            font-size: 1.4rem;
+            margin-bottom: 2rem;
+            opacity: 0;
+            animation: fadeInUp 1s ease forwards 0.7s;
+            font-weight: 300;
+            line-height: 1.6;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            opacity: 0;
+            animation: fadeInUp 1s ease forwards 0.9s;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .btn-primary:hover {
+            background: #c0392b;
+        }
+
+        .btn-secondary:hover {
+            background: white;
+            color: var(--primary-color);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 섹션 스타일 */
+        .section {
+            padding: 5rem 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .section-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-light);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* 소개 섹션 */
+        .about {
+            background: var(--bg-light);
+        }
+
+        .about-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .about-text h3 {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .about-text p {
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+
+        .founder-info {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow-light);
+            text-align: center;
+        }
+
+        .founder-avatar {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: white;
+            font-weight: 700;
+        }
+
+        /* 서비스 섹션 */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .service-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow-light);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+
+        .service-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-heavy);
+        }
+
+        .service-icon {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .service-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        /* 방법론 섹션 */
+        .methodology {
+            background: var(--bg-dark);
+            color: white;
+        }
+
+        .methodology .section-title {
+            color: white;
+        }
+
+        .process-timeline {
+            position: relative;
+            margin-top: 4rem;
+        }
+
+        .process-step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .process-step:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+
+        .step-number {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--gradient-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+            padding: 0 2rem;
+        }
+
+        .step-content h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            color: var(--secondary-color);
+        }
+
+        /* 혁신 섹션 */
+        .innovation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .innovation-item {
+            background: var(--gradient-secondary);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .innovation-item:hover {
+            transform: scale(1.05);
+        }
+
+        .innovation-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        /* 사례 연구 섹션 */
+        .case-study {
+            background: var(--bg-light);
+        }
+
+        .case-study-content {
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: var(--shadow-medium);
+        }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .tech-tag {
+            background: var(--gradient-primary);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        /* 연락처 섹션 */
+        .contact {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .contact .section-title {
+            color: white;
+        }
+
+        .contact-form {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .contact-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .contact-item {
+            text-align: center;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .contact-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--secondary-color);
+        }
+
+        /* 푸터 */
+        .footer {
+            background: #1a252f;
+            color: white;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .hero h1 {
+                font-size: 2.3rem;
+            }
+
+            .hero .subtitle {
+                font-size: 1.2rem;
+            }
+
+            .about-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .process-step {
+                flex-direction: column !important;
+                text-align: center;
+            }
+
+            .step-content {
+                padding: 1rem 0;
+            }
+
+            .section {
+                padding: 3rem 1rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+        }
+
+        /* 스크롤 애니메이션 */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* 로딩 애니메이션 */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading.hide {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- 로딩 화면 -->
+    <div class="loading" id="loading">
+        <div class="loader"></div>
+    </div>
+
+    <!-- 네비게이션 -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="#home" class="logo">TheSysM</a>
+            <ul class="nav-links">
+                <li><a href="#home">홈</a></li>
+                <li><a href="#about">소개</a></li>
+                <li><a href="#services">서비스</a></li>
+                <li><a href="#methodology">방법론</a></li>
+                <li><a href="#innovation">혁신</a></li>
+                <li><a href="#case-study">사례 연구</a></li>
+                <li><a href="#contact">연락처</a></li>
+            </ul>
+            <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
+        </div>
+    </nav>
+
+    <!-- 히어로 섹션 -->
+    <section class="hero" id="home">
+        <div class="hero-content">
+            <h1>혁신적 AI 협업 개발 방법론</h1>
+            <p class="subtitle">검증된 AI-인간 협업 방법론으로 소프트웨어 개발을 혁신하고 10배 빠른 결과를 실현하세요</p>
+            <div class="hero-cta">
+                <a href="#contact" class="btn btn-primary">개발 혁신 시작하기</a>
+                <a href="#methodology" class="btn btn-secondary">방법론 탐구하기</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 소개 섹션 -->
+    <section class="section about" id="about">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">TheSysM 소개</h2>
+                <p class="section-subtitle">혁신적 AI-인간 협업 방법론을 통해 소프트웨어 개발의 미래를 선도합니다</p>
+            </div>
+            <div class="about-content">
+                <div class="about-text">
+                    <h3>시스템 아이디어 혁명</h3>
+                    <p>TheSysM(The System Ideas)은 개발 혁명의 최전선에서 인간과 AI가 협업하여 탁월한 소프트웨어 시스템을 창조하는 방식을 재정의하고 있습니다. 우리의 검증된 방법론은 기존 접근법을 뛰어넘어 전례 없는 속도, 품질, 혁신을 제공합니다.</p>
+                    <p>우리는 획기적인 11단계 AI 협업 프레임워크를 통해 기업 개발 프로세스를 혁신하는 전문가입니다. 이를 통해 조직이 최고 품질 기준을 유지하면서도 놀라운 효율성 향상을 달성할 수 있도록 지원합니다.</p>
+                    <p>우리의 접근법은 단순히 AI를 도구로 사용하는 것이 아닙니다. 인간의 창의성과 AI 역량이 결합되어 혼자서는 달성할 수 없는 결과를 만들어내는 진정한 파트너십 모델을 구축했습니다.</p>
+                </div>
+                <div class="founder-info">
+                    <div class="founder-avatar">강</div>
+                    <h3>ganzsKang</h3>
+                    <p><strong>창립자 & 최고혁신책임자</strong></p>
+                    <p>AI 협업 개발 방법론의 선구자로서 풀스택 시스템 아키텍처와 혁신적 개발 프로세스 분야에서 폭넓은 경험을 보유하고 있습니다.</p>
+                    <p><strong>이메일:</strong> acskang@gmail.com</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 서비스 섹션 -->
+    <section class="section services" id="services">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">우리의 서비스</h2>
+                <p class="section-subtitle">AI 협업 개발 혁신을 위한 종합 솔루션</p>
+            </div>
+            <div class="services-grid">
+                <div class="service-card fade-in">
+                    <div class="service-icon">🚀</div>
+                    <h3>방법론 컨설팅</h3>
+                    <p>검증된 AI 협업 방법론으로 개발 프로세스를 혁신합니다. 현재 워크플로우를 분석하고 즉각적인 결과를 제공하는 맞춤형 통합 전략을 설계합니다.</p>
+                </div>
+                <div class="service-card fade-in">
+                    <div class="service-icon">🎓</div>
+                    <h3>전문가 교육</h3>
+                    <p>프롬프트 엔지니어링과 AI 협업 개발을 위한 종합 교육 프로그램을 제공합니다. 최첨단 개발 실무에서 팀의 전문성을 개발하세요.</p>
+                </div>
+                <div class="service-card fade-in">
+                    <div class="service-icon">🏗️</div>
+                    <h3>시스템 아키텍처</h3>
+                    <p>AI-인간 협업을 활용한 모듈화되고 확장 가능한 접근법을 사용하여 최적의 결과를 위한 전문가 시스템 아키텍처 설계 및 구현을 지원합니다.</p>
+                </div>
+                <div class="service-card fade-in">
+                    <div class="service-icon">⚡</div>
+                    <h3>AI-애자일 통합</h3>
+                    <p>기존 애자일 방법론을 더 넓고 효과적인 개발 환경으로 확장하는 혁신적인 AI-애자일 프로세스 통합을 제공합니다.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 방법론 섹션 -->
+    <section class="section methodology" id="methodology">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">11단계 혁신 프로세스</h2>
+                <p class="section-subtitle">소프트웨어가 구상, 설계, 구현되는 방식을 변화시키는 검증된 방법론</p>
+            </div>
+            <div class="process-timeline">
+                <div class="process-step fade-in">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>초기 요구사항 수집</h3>
+                        <p>종합적인 시스템 목표, 사용자 정의, 아키텍처 프롬프팅</p>
+                    </div>
+                </div>
+                <div class="process-step fade-in">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>기본 설계 구현</h3>
+                        <p>사용자 아이디어 수집 및 검증을 위한 신속한 시스템 프로토타입</p>
+                    </div>
+                </div>
+                <div class="process-step fade-in">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>상세 설계 단계</h3>
+                        <p>설계자 의도에 맞춘 프로덕션 준비 시스템 개발</p>
+                    </div>
+                </div>
+                <div class="process-step fade-in">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>문서화 및 테스팅</h3>
+                        <p>반복적 테스트 사이클과 함께하는 종합적 문서 작성</p>
+                    </div>
+                </div>
+                <div class="process-step fade-in">
+                    <div class="step-number">5</div>
+                    <div class="step-content">
+                        <h3>시스템 개선</h3>
+                        <p>최고 성능을 위한 프로그램 재구조화 및 최적화</p>
+                    </div>
+                </div>
+                <div class="process-step fade-in">
+                    <div class="step-number">6</div>
+                    <div class="step-content">
+                        <h3>완벽한 프롬프트 생성</h3>
+                        <p>시스템 복제를 위한 종합적인 AI 프롬프트 개발</p>
+                    </div>
+                </div>
+                <div class="process-step fade-in">
+                    <div class="step-number">7</div>
+                    <div class="step-content">
+                        <h3>AI 일괄 개발</h3>
+                        <p>완벽한 프롬프트로 AI가 한 번에 시스템을 개발하도록 지원</p>
+                    </div>
+                </div>
+                <div class="process-step fade-in">
+                    <div class="step-number">8</div>
+                    <div class="step-content">
+                        <h3>비교 분석</h3>
+                        <p>단계별 개발과 일괄 개발 코드의 차이점 분석</p>
+                    </div>
+                </div>
+                <div class="process-step fade-in">
+                    <div class="step-number">9</div>
+                    <div class="step-content">
+                        <h3>유지보수 프롬프트</h3>
+                        <p>AI 생성 코드의 유지보수 프롬프트 제작 및 실행 연습</p>
+                    </div>
+                </div>
+                <div class="process-step fade-in">
+                    <div class="step-number">10</div>
+                    <div class="step-content">
+                        <h3>프로덕션 배포</h3>
+                        <p>AI 일괄 생성 코드로 구현 후 프로덕션 시스템 배포</p>
+                    </div>
+                </div>
+                <div class="process-step fade-in">
+                    <div class="step-number">11</div>
+                    <div class="step-content">
+                        <h3>시스템 실가동</h3>
+                        <p>완성된 시스템의 실제 운영 및 지속적 모니터링</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 혁신 섹션 -->
+    <section class="section innovation" id="innovation">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">혁신적 변화</h2>
+                <p class="section-subtitle">획기적인 접근법으로 기존 개발 패러다임을 변화시킵니다</p>
+            </div>
+            <div class="innovation-grid">
+                <div class="innovation-item fade-in">
+                    <div class="innovation-icon">🔄</div>
+                    <h3>병행 개발</h3>
+                    <p>최대 효율성을 위한 파일럿과 프로덕션 시스템의 동시 개발</p>
+                </div>
+                <div class="innovation-item fade-in">
+                    <div class="innovation-icon">🧠</div>
+                    <h3>살아있는 문서</h3>
+                    <p>시스템과 함께 진화하는 동적이고 실행 가능한 문서</p>
+                </div>
+                <div class="innovation-item fade-in">
+                    <div class="innovation-icon">⚡</div>
+                    <h3>10배 속도 향상</h3>
+                    <p>품질 타협 없이 전례 없는 개발 속도 달성</p>
+                </div>
+                <div class="innovation-item fade-in">
+                    <div class="innovation-icon">🎯</div>
+                    <h3>풀스택 ESB</h3>
+                    <p>모듈 아키텍처와 진정한 엔터프라이즈 서비스 버스 통합</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 사례 연구 섹션 -->
+    <section class="section case-study" id="case-study">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">성공 사례: 영어 학습 플랫폼</h2>
+                <p class="section-subtitle">AI 협업 방법론의 실제 적용 사례</p>
+            </div>
+            <div class="case-study-content fade-in">
+                <h3>프로젝트 개요</h3>
+                <p>영화 대사를 활용한 종합적인 영어 학습 플랫폼을 개발하여 실제 동작하는 AI 협업 방법론을 보여주었습니다. 이 프로젝트는 사용자 대면 기능과 견고한 백엔드 시스템의 병행 개발을 선보였습니다.</p>
+                
+                <h4>주요 성과:</h4>
+                <ul>
+                    <li>📊 <strong>70% 빠른 개발</strong> 기존 방식 대비</li>
+                    <li>🎯 <strong>모듈 아키텍처</strong> 16개 독립 컴포넌트</li>
+                    <li>📱 <strong>반응형 디자인</strong> 모든 기기 최적화</li>
+                    <li>🔍 <strong>고급 검색 기능</strong> 실시간 처리</li>
+                    <li>🎬 <strong>비디오 통합</strong> 원활한 재생</li>
+                    <li>💾 <strong>최적화된 DB</strong> 효율적인 데이터 관리</li>
+                    <li>🔧 <strong>완전 모듈화</strong> 유지보수성 극대화</li>
+                </ul>
+
+                <h4>기술 스택:</h4>
+                <div class="tech-stack">
+                    <span class="tech-tag">Django 5.2</span>
+                    <span class="tech-tag">Python 3.13</span>
+                    <span class="tech-tag">JavaScript ES6+</span>
+                    <span class="tech-tag">HTML5/CSS3</span>
+                    <span class="tech-tag">MySQL 8.0</span>
+                    <span class="tech-tag">Ubuntu 24.04</span>
+                    <span class="tech-tag">AI 협업 설계</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 연락처 섹션 -->
+    <section class="section contact" id="contact">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">개발 프로세스를 혁신하세요</h2>
+                <p class="section-subtitle">소프트웨어 개발을 혁신할 준비가 되셨나요? 대화를 시작해보세요.</p>
+            </div>
+            
+            <form class="contact-form fade-in" id="contactForm">
+                <div class="form-group">
+                    <label for="name">성명</label>
+                    <input type="text" id="name" name="name" placeholder="성명을 입력해주세요" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">이메일 주소</label>
+                    <input type="email" id="email" name="email" placeholder="your.email@company.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="company">회사명</label>
+                    <input type="text" id="company" name="company" placeholder="회사명을 입력해주세요">
+                </div>
+                <div class="form-group">
+                    <label for="message">메시지</label>
+                    <textarea id="message" name="message" rows="5" placeholder="개발 과제와 목표에 대해 알려주세요..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">메시지 보내기</button>
+            </form>
+
+            <div class="contact-info">
+                <div class="contact-item fade-in">
+                    <div class="contact-icon">📧</div>
+                    <h3>이메일</h3>
+                    <p>acskang@gmail.com</p>
+                </div>
+                <div class="contact-item fade-in">
+                    <div class="contact-icon">🌐</div>
+                    <h3>글로벌 서비스</h3>
+                    <p>원격 컨설팅과 교육을 통해 전 세계 고객에게 서비스를 제공합니다</p>
+                </div>
+                <div class="contact-item fade-in">
+                    <div class="contact-icon">💼</div>
+                    <h3>상담</h3>
+                    <p>개발 혁신 필요성을 평가하는 무료 초기 상담을 제공합니다</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 TheSysM (The System Ideas). 혁신적 AI 협업 개발 방법론.</p>
+            <p>소프트웨어 개발의 미래를 선도합니다 | 창립자: ganzsKang</p>
+        </div>
+    </footer>
+
+    <script>
+        // 로딩 화면
+        window.addEventListener('load', function() {
+            const loading = document.getElementById('loading');
+            loading.classList.add('hide');
+            setTimeout(() => {
+                loading.style.display = 'none';
+            }, 500);
+        });
+
+        // 네비바 스크롤 효과
+        window.addEventListener('scroll', function() {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 100) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+
+        // 네비게이션 링크 부드러운 스크롤
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // 스크롤 애니메이션을 위한 Intersection Observer
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        // fade-in 클래스가 있는 모든 요소 관찰
+        document.querySelectorAll('.fade-in').forEach(el => {
+            observer.observe(el);
+        });
+
+        // 연락처 폼 처리
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // 폼 데이터 가져오기
+            const formData = new FormData(this);
+            const name = formData.get('name');
+            const email = formData.get('email');
+            const company = formData.get('company');
+            const message = formData.get('message');
+            
+            // 이메일 본문 생성
+            const emailBody = `안녕하세요 ganzsKang님,
+
+TheSysM의 AI 협업 개발 방법론에 관심이 있습니다.
+
+이름: ${name}
+이메일: ${email}
+회사: ${company}
+
+메시지:
+${message}
+
+감사합니다.
+${name}`;
+
+            // mailto 링크 생성
+            const subject = encodeURIComponent('TheSysM 상담 요청');
+            const body = encodeURIComponent(emailBody);
+            const mailtoLink = `mailto:acskang@gmail.com?subject=${subject}&body=${body}`;
+            
+            // 이메일 클라이언트 열기
+            window.location.href = mailtoLink;
+            
+            // 성공 메시지 표시
+            alert('관심을 가져주셔서 감사합니다! ganzsKang에게 미리 작성된 메시지와 함께 이메일 클라이언트가 열립니다.');
+        });
+
+        // 모바일 메뉴 기능
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const navLinks = document.querySelector('.nav-links');
+        
+        mobileMenuBtn.addEventListener('click', function() {
+            navLinks.style.display = navLinks.style.display === 'flex' ? 'none' : 'flex';
+        });
+
+        // 인터랙티브 효과 추가
+        document.querySelectorAll('.service-card, .innovation-item').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-10px) scale(1.02)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+
+        // 개발자를 위한 콘솔 메시지
+        console.log('%c🚀 TheSysM - 혁신적 AI 협업 개발', 'color: #3498db; font-size: 18px; font-weight: bold;');
+        console.log('%c우리의 방법론에 관심이 있으시나요? acskang@gmail.com으로 연락주세요', 'color: #27ae60; font-size: 14px;');
+    </script>
+</body>
+</html>

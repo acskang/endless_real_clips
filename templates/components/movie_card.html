@@ -1,0 +1,141 @@
+<!-- 개별 영화 카드 컴포넌트 (index-original.html 기반) -->
+<div class="col-lg-3 col-md-4 col-sm-6" data-movie-data='{{ movie|safe }}'>
+    <div class="movie-card card bg-dark border-secondary h-100" data-movie-index="{{ forloop.counter0 }}">
+        <!-- 포스터 이미지: models.py MovieTable.poster_url, poster_image 활용 -->
+        <div class="movie-card-image position-relative overflow-hidden" 
+             style="cursor: pointer; height: 300px;"
+             data-bs-toggle="modal" 
+             data-bs-target="#video-modal"
+             onclick="openVideoModal(
+                 '{{ movie.dialogues.0.video_url|default:'' }}',
+                 '{{ movie.title|escapejs }}',
+                 '{{ movie.year }}',
+                 '{{ movie.country }}',
+                 '{{ movie.dialogues.0.text|escapejs }}',
+                 '{{ movie.dialogues.0.text_ko|escapejs }}'
+             )">
+            
+            {% if movie.poster_url %}
+                <img 
+                    src="{{ movie.poster_url }}"
+                    alt="{{ movie.title }} 포스터"
+                    class="card-img-top h-100 object-fit-cover"
+                    style="opacity: 0; transition: opacity 0.3s ease;"
+                    onload="this.style.opacity='1'; this.parentElement.classList.remove('loading');"
+                    onerror="handlePosterError(this)"
+                />
+            {% elif movie.poster_image_path %}
+                <img 
+                    src="{{ movie.poster_image_path }}"
+                    alt="{{ movie.title }} 포스터"
+                    class="card-img-top h-100 object-fit-cover"
+                    style="opacity: 0; transition: opacity 0.3s ease;"
+                    onload="this.style.opacity='1'; this.parentElement.classList.remove('loading');"
+                    onerror="handlePosterError(this)"
+                />
+            {% else %}
+                <div class="poster-placeholder d-flex flex-column align-items-center justify-content-center h-100 bg-secondary bg-opacity-50">
+                    <i class="fas fa-film text-muted" style="font-size: 3rem;"></i>
+                    <span class="text-muted mt-2">포스터 없음</span>
+                </div>
+            {% endif %}
+            
+            <!-- 호버 오버레이 -->
+            <div class="poster-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" 
+                 style="background: rgba(0, 0, 0, 0.6); opacity: 0; transition: opacity 0.3s ease;">
+                <div class="play-icon bg-primary rounded-circle d-flex align-items-center justify-content-center" 
+                     style="width: 80px; height: 80px; transition: transform 0.3s ease;">
+                    <i class="fas fa-play text-white" style="font-size: 1.5rem; margin-left: 4px;"></i>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 카드 본문: models.py 필드들 활용 -->
+        <div class="card-body d-flex flex-column">
+            <!-- 영화 정보: MovieTable 필드들 -->
+            <div class="movie-info mb-3">
+                <h5 class="card-title text-primary mb-2">
+                    {{ movie.title }}
+                </h5>
+                <div class="movie-meta d-flex flex-wrap gap-2 mb-2">
+                    {% if movie.year %}
+                    <span class="badge bg-outline-secondary">{{ movie.year }}</span>
+                    {% endif %}
+                    {% if movie.director %}
+                    <span class="badge bg-outline-secondary">{{ movie.director }}</span>
+                    {% endif %}
+                    {% if movie.genre %}
+                    <span class="badge bg-outline-secondary">{{ movie.genre }}</span>
+                    {% endif %}
+                </div>
+                
+                <!-- 영화 통계: MovieTable.view_count 등 -->
+                {% if movie.view_count or movie.imdb_rating %}
+                <div class="movie-stats small text-muted">
+                    {% if movie.view_count %}
+                    <i class="fas fa-eye me-1"></i>{{ movie.view_count }}회 조회
+                    {% endif %}
+                    {% if movie.imdb_rating %}
+                    <span class="ms-2"><i class="fas fa-star me-1"></i>{{ movie.imdb_rating }}</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- 대사 정보: DialogueTable 필드들 -->
+            {% if movie.dialogues %}
+            {% with dialogue=movie.dialogues.0 %}
+            <div class="dialogue-section mt-auto">
+                <!-- 영어 대사: DialogueTable.dialogue_phrase -->
+                <div class="mb-3">
+                    <h6 class="text-light mb-2">
+                        <i class="fas fa-quote-left me-1"></i>영어 대사
+                    </h6>
+                    <p class="card-text text-light small">
+                        "{{ dialogue.text }}"
+                    </p>
+                </div>
+                
+                <!-- 한글 번역: DialogueTable.dialogue_phrase_ko -->
+                <div>
+                    <h6 class="text-success mb-2">
+                        <i class="fas fa-language me-1"></i>한글 번역
+                    </h6>
+                    {% if dialogue.text_ko %}
+                    <p class="card-text text-success small db-translated">
+                        💾 "{{ dialogue.text_ko }}"
+                    </p>
+                    {% else %}
+                    <p class="card-text text-warning small">
+                        <i class="fas fa-language me-1"></i>번역 필요
+                        <button class="btn btn-outline-warning btn-sm ms-2 translate-btn" 
+                                data-text="{{ dialogue.text|escapejs }}">
+                            번역하기
+                        </button>
+                    </p>
+                    {% endif %}
+                </div>
+                
+                <!-- 대사 메타데이터 -->
+                <div class="dialogue-meta mt-2 pt-2 border-top border-secondary">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            {% if dialogue.start_time %}
+                            <i class="fas fa-clock me-1"></i>{{ dialogue.start_time }}
+                            {% endif %}
+                        </small>
+                        <div class="dialogue-actions">
+                            <button class="btn btn-outline-primary btn-sm copy-dialogue" 
+                                    title="복사" 
+                                    data-text="{{ dialogue.text }}">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endwith %}
+            {% endif %}
+        </div>
+    </div>
+</div>

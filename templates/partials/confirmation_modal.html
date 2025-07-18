@@ -1,0 +1,346 @@
+<!-- 검색 확인 모달 -->
+{% if show_confirmation %}
+<div class="modal fade" id="search-confirmation-modal" tabindex="-1" aria-labelledby="search-confirmation-label" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark border-warning">
+            <div class="modal-header border-warning">
+                <h5 class="modal-title text-warning" id="search-confirmation-label">
+                    <i class="fas fa-exclamation-triangle me-2"></i>검색어 확인
+                </h5>
+            </div>
+            <div class="modal-body">
+                <!-- 경고 메시지 -->
+                <div class="alert alert-warning border-warning bg-transparent" role="alert">
+                    <div class="d-flex align-items-start">
+                        <i class="fas fa-info-circle text-warning me-2 mt-1"></i>
+                        <div>
+                            <strong>{{ warning_message }}</strong>
+                            
+                            {% if warning_type == 'too_short' %}
+                            <p class="mb-0 mt-2 small text-muted">
+                                짧은 검색어는 너무 많은 결과를 가져올 수 있고, 서버 부하를 일으킬 수 있습니다.
+                            </p>
+                            {% elif warning_type == 'single_char' %}
+                            <p class="mb-0 mt-2 small text-muted">
+                                단일 문자 검색은 의미없는 결과가 많을 수 있습니다.
+                            </p>
+                            {% elif warning_type == 'repeated_chars' %}
+                            <p class="mb-0 mt-2 small text-muted">
+                                반복되는 문자는 오타일 가능성이 높습니다.
+                            </p>
+                            {% elif warning_type == 'mixed_languages' %}
+                            <p class="mb-0 mt-2 small text-muted">
+                                한글과 영어가 섞인 검색어는 정확한 결과를 찾기 어려울 수 있습니다.
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 현재 입력 -->
+                <div class="mb-3">
+                    <label class="form-label text-light small">현재 입력:</label>
+                    <div class="bg-secondary bg-opacity-25 border border-secondary rounded p-2">
+                        <code class="text-warning">"{{ original_input }}"</code>
+                    </div>
+                </div>
+
+                <!-- 제안 사항 -->
+                {% if suggestions %}
+                <div class="mb-3">
+                    <label class="form-label text-light small">제안하는 검색어:</label>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for suggestion in suggestions %}
+                        <button type="button" class="btn btn-outline-primary btn-sm suggestion-btn" 
+                                data-suggestion="{{ suggestion }}"
+                                onclick="selectSuggestion('{{ suggestion|escapejs }}')">
+                            "{{ suggestion }}"
+                        </button>
+                        {% endfor %}
+                    </div>
+                    <small class="text-muted">제안된 검색어를 클릭하면 자동으로 선택됩니다.</small>
+                </div>
+                {% endif %}
+
+                <!-- 수정된 입력 -->
+                <div class="mb-3">
+                    <label for="confirmed-input" class="form-label text-light small">
+                        검색할 텍스트 (수정 가능):
+                    </label>
+                    <input type="text" 
+                           id="confirmed-input" 
+                           class="form-control bg-dark border-secondary text-white"
+                           value="{{ original_input }}"
+                           maxlength="500"
+                           placeholder="검색할 텍스트를 입력하세요"
+                           autofocus>
+                    <div class="form-text text-muted">
+                        텍스트를 수정한 후 확인 버튼을 누르세요.
+                    </div>
+                </div>
+
+                <!-- 데이터 품질 안내 -->
+                <div class="bg-info bg-opacity-10 border border-info rounded p-3">
+                    <div class="d-flex align-items-start">
+                        <i class="fas fa-lightbulb text-info me-2 mt-1"></i>
+                        <div class="small">
+                            <strong class="text-info">데이터 품질 향상을 위한 안내</strong>
+                            <p class="mb-0 mt-1 text-muted">
+                                정확한 검색어는 더 나은 검색 결과를 제공하고, 
+                                다른 사용자들에게도 도움이 됩니다.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-warning">
+                <button type="button" class="btn btn-secondary" onclick="cancelSearch()">
+                    <i class="fas fa-times me-1"></i>취소
+                </button>
+                <button type="button" class="btn btn-outline-warning" onclick="proceedWithOriginal()">
+                    <i class="fas fa-exclamation-triangle me-1"></i>그대로 검색
+                </button>
+                <button type="button" class="btn btn-primary" onclick="proceedWithConfirmed()">
+                    <i class="fas fa-check me-1"></i>확인 후 검색
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 검색 확인 모달 관련 JavaScript
+function selectSuggestion(suggestion) {
+    const confirmedInput = document.getElementById('confirmed-input');
+    if (confirmedInput) {
+        confirmedInput.value = suggestion;
+        
+        // 선택된 제안 버튼 하이라이트
+        document.querySelectorAll('.suggestion-btn').forEach(btn => {
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-outline-primary');
+        });
+        
+        event.target.classList.remove('btn-outline-primary');
+        event.target.classList.add('btn-primary');
+    }
+}
+
+function cancelSearch() {
+    // 모달 닫기
+    const modal = bootstrap.Modal.getInstance(document.getElementById('search-confirmation-modal'));
+    if (modal) {
+        modal.hide();
+    }
+    
+    // 검색 입력창 포커스
+    const searchInput = document.getElementById('search-input-desktop') || document.getElementById('search-input-mobile');
+    if (searchInput) {
+        searchInput.focus();
+    }
+}
+
+function proceedWithOriginal() {
+    // 원본 텍스트로 검색 진행
+    const originalInput = '{{ original_input|escapejs }}';
+    submitSearchWithText(originalInput);
+}
+
+function proceedWithConfirmed() {
+    // 확인된 텍스트로 검색 진행
+    const confirmedInput = document.getElementById('confirmed-input');
+    if (!confirmedInput) return;
+    
+    const searchText = confirmedInput.value.trim();
+    
+    if (!searchText) {
+        alert('검색할 텍스트를 입력해주세요.');
+        confirmedInput.focus();
+        return;
+    }
+    
+    submitSearchWithText(searchText);
+}
+
+function submitSearchWithText(searchText) {
+    console.log('🔄 DEBUG: submitSearchWithText 호출됨:', searchText);
+    
+    // 🎬 로딩 애니메이션 먼저 표시 (모달 닫기 전에!)
+    console.log('🎬 DEBUG: 로딩 애니메이션 시작');
+    showSearchLoading();
+    
+    // 검색 폼에 텍스트 설정
+    const unifiedInput = document.getElementById('unified-search-input');
+    const desktopInput = document.getElementById('search-input-desktop');
+    const mobileInput = document.getElementById('search-input-mobile');
+    
+    if (unifiedInput) unifiedInput.value = searchText;
+    if (desktopInput) desktopInput.value = searchText;
+    if (mobileInput) mobileInput.value = searchText;
+    
+    // 확인 건너뛰기 플래그 추가
+    const searchForm = document.getElementById('search-form');
+    if (searchForm) {
+        // 숨겨진 입력 추가 (확인 건너뛰기)
+        let skipConfirm = document.getElementById('skip-confirmation');
+        if (!skipConfirm) {
+            skipConfirm = document.createElement('input');
+            skipConfirm.type = 'hidden';
+            skipConfirm.id = 'skip-confirmation';
+            skipConfirm.name = 'skip_confirmation';
+            searchForm.appendChild(skipConfirm);
+        }
+        skipConfirm.value = 'true';
+        
+        // 모달 닫기
+        const modal = bootstrap.Modal.getInstance(document.getElementById('search-confirmation-modal'));
+        if (modal) {
+            modal.hide();
+        }
+        
+        // 로딩 애니메이션이 표시된 후 폼 제출
+        setTimeout(() => {
+            console.log('🚀 DEBUG: 폼 제출 실행');
+            searchForm.submit();
+        }, 500); // 로딩 애니메이션이 확실히 표시되도록 500ms 지연
+    }
+}
+
+// 🎬 로딩 애니메이션 표시 함수
+function showSearchLoading() {
+    console.log('🎬 [LOADING] showSearchLoading 함수 호출됨');
+    
+    const loadingOverlay = document.getElementById('search-loading-overlay');
+    if (!loadingOverlay) {
+        console.error('❌ [LOADING] search-loading-overlay 요소를 찾을 수 없음');
+        return;
+    }
+    
+    // 로딩 오버레이 표시
+    loadingOverlay.classList.remove('d-none');
+    console.log('✅ [LOADING] 로딩 오버레이 표시됨');
+    
+    // 로딩 단계 애니메이션 시작
+    startLoadingSteps();
+}
+
+// 🎬 로딩 단계 애니메이션
+function startLoadingSteps() {
+    console.log('🎬 [LOADING] 로딩 단계 애니메이션 시작');
+    
+    const steps = ['step-search', 'step-fetch', 'step-process', 'step-save'];
+    const progressBar = document.getElementById('search-progress');
+    
+    let currentStep = 0;
+    
+    function activateStep() {
+        if (currentStep < steps.length) {
+            const stepElement = document.getElementById(steps[currentStep]);
+            if (stepElement) {
+                stepElement.classList.add('active');
+                console.log(`🎬 [LOADING] 단계 활성화: ${steps[currentStep]}`);
+            }
+            
+            // 프로그레스 바 업데이트
+            if (progressBar) {
+                const progress = ((currentStep + 1) / steps.length) * 100;
+                progressBar.style.width = progress + '%';
+                progressBar.setAttribute('aria-valuenow', progress);
+                console.log(`📊 [LOADING] 진행률: ${progress}%`);
+            }
+            
+            currentStep++;
+            
+            // 다음 단계로 이동 (1초 간격)
+            if (currentStep < steps.length) {
+                setTimeout(activateStep, 1000);
+            }
+        }
+    }
+    
+    // 첫 번째 단계 시작
+    activateStep();
+}
+
+// 모달이 표시될 때 자동 표시
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🎬 [MODAL] DOMContentLoaded - 확인 모달 초기화');
+    
+    const modalElement = document.getElementById('search-confirmation-modal');
+    if (modalElement) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+        console.log('🎬 [MODAL] 확인 모달 표시됨');
+        
+        // Enter 키로 확인
+        const confirmedInput = document.getElementById('confirmed-input');
+        if (confirmedInput) {
+            confirmedInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    proceedWithConfirmed();
+                }
+            });
+        }
+    }
+});
+</script>
+
+<style>
+/* 로딩 단계 스타일 */
+.loading-steps {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin: 2rem 0;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    opacity: 0.5;
+    transition: all 0.3s ease;
+}
+
+.step.active {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.step-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: #6c757d;
+    transition: color 0.3s ease;
+}
+
+.step.active .step-icon {
+    color: #0d6efd;
+}
+
+.step-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+    transition: color 0.3s ease;
+}
+
+.step.active .step-text {
+    color: #ffffff;
+    font-weight: 500;
+}
+
+/* 모바일 대응 */
+@media (max-width: 768px) {
+    .loading-steps {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .step {
+        flex-direction: row;
+        justify-content: center;
+        gap: 1rem;
+    }
+}
+</style>
+{% endif %}

@@ -1,0 +1,324 @@
+/* responsive.css - 반응형 디자인 */
+
+/* ===== 데스크톱 검색바 최적화 ===== */
+@media (min-width: 768px) {
+    .search-section .input-group-lg .form-control {
+        font-size: 1.1rem;
+        padding: 0.75rem 1rem;
+        border-radius: 0;
+    }
+    
+    .search-section .input-group-lg .input-group-text {
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem 0 0 0.5rem;
+        min-width: 50px;
+        justify-content: center;
+    }
+    
+    .search-section .input-group-lg .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 0 0.5rem 0.5rem 0;
+        font-weight: 500;
+    }
+    
+    .search-section .input-group-lg .btn:not(:last-child) {
+        border-radius: 0;
+        border-right: 1px solid var(--bs-border-color);
+    }
+}
+
+/* ===== 모바일 검색바 최적화 ===== */
+@media (max-width: 767.98px) {
+    .search-section .form-control-lg {
+        font-size: 1rem;
+        padding: 1rem 1rem 1rem 3rem;
+        border-radius: 0.75rem;
+        min-height: 3.5rem;
+    }
+    
+    .search-section .btn-lg {
+        font-size: 1.1rem;
+        padding: 1rem 2rem;
+        border-radius: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .search-section .position-absolute {
+        z-index: 5;
+    }
+    
+    .search-section .position-absolute i {
+        font-size: 1.1rem;
+    }
+    
+    .quick-search-btn {
+        border-radius: 1rem;
+        font-size: 0.85rem;
+        padding: 0.375rem 0.75rem;
+        transition: all 0.2s ease;
+    }
+    
+    .quick-search-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+    }
+}
+
+/* ===== 모바일 (576px 이하) ===== */
+@media (max-width: 576px) {
+    .profile-image {
+        width: 4rem;
+        height: 4rem;
+    }
+    
+    .display-3 {
+        font-size: 2rem !important;
+    }
+    
+    .movie-card {
+        margin-bottom: 1.5rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .dialogue-section p {
+        font-size: 0.85rem;
+    }
+    
+    .search-section .row.g-2 > * {
+        margin-bottom: 0.5rem;
+    }
+    
+    .search-section .form-check-label {
+        font-size: 0.85rem;
+    }
+    
+    .quick-search-btn {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+    }
+}
+
+/* ===== 태블릿 (768px 이하) ===== */
+@media (max-width: 768px) {
+    .movie-card:hover {
+        transform: translateY(-4px) scale(1.01);
+    }
+    
+    .search-section .input-group {
+        flex-direction: column;
+    }
+    
+    .search-section .input-group > * {
+        border-radius: var(--border-radius) !important;
+        margin-bottom: 0.5rem;
+    }
+    
+    .search-section .input-group > *:last-child {
+        margin-bottom: 0;
+    }
+    
+    /* 로딩 애니메이션 모바일 최적화 */
+    .loading-steps {
+        gap: 0.75rem;
+        margin: 1.5rem 0;
+    }
+    
+    .step {
+        padding: 0.5rem 0.75rem;
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+    
+    .step-icon {
+        margin-right: 0;
+        margin-bottom: 0.25rem;
+    }
+    
+    .step-text {
+        font-size: 0.8rem;
+    }
+    
+    .spinner-ring {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .spinner-ring div {
+        width: 48px;
+        height: 48px;
+        margin: 6px;
+    }
+    
+    #loading-title {
+        font-size: 1.5rem;
+    }
+    
+    #loading-message {
+        font-size: 0.9rem;
+    }
+    
+    .progress {
+        width: 250px !important;
+    }
+}
+
+/* ===== 키보드 대응 ===== */
+.keyboard-open {
+    height: 100vh;
+    overflow: hidden;
+}
+
+.keyboard-open .movie-card {
+    transform: none !important;
+}
+
+/* ===== 터치 디바이스 최적화 ===== */
+@media (hover: none) and (pointer: coarse) {
+    .search-section .btn,
+    .search-section .form-control {
+        min-height: 44px;
+    }
+    
+    .search-section .quick-search-btn {
+        min-height: 40px;
+        padding: 0.5rem 1rem;
+    }
+}
+
+/* ===== 다크 테마 최적화 ===== */
+@media (prefers-color-scheme: dark) {
+    :root {
+        color-scheme: dark;
+    }
+    
+    .form-control {
+        color-scheme: dark;
+    }
+}
+
+[data-bs-theme="dark"] .search-section .form-control {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+[data-bs-theme="dark"] .search-section .form-control::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+[data-bs-theme="dark"] .search-section .input-group-text {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+[data-bs-theme="dark"] #search-loading-overlay {
+    background: rgba(15, 23, 42, 0.98);
+}
+
+[data-bs-theme="dark"] .step {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-bs-theme="dark"] .step.active {
+    background: rgba(59, 130, 246, 0.15);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+}
+
+[data-bs-theme="dark"] .step.completed {
+    background: rgba(16, 185, 129, 0.15);
+}
+
+/* ===== 고대비 모드 지원 ===== */
+@media (prefers-contrast: high) {
+    .movie-card {
+        border: 2px solid rgba(255, 255, 255, 0.5);
+    }
+    
+    .btn {
+        border: 2px solid rgba(255, 255, 255, 0.7);
+    }
+    
+    .text-muted {
+        color: #ffffff !important;
+    }
+    
+    .search-section .form-control {
+        border-width: 2px;
+    }
+    
+    .search-section .btn {
+        border-width: 2px;
+        font-weight: 700;
+    }
+}
+
+/* ===== 프린트 스타일 ===== */
+@media print {
+    .modal,
+    .toast-container,
+    #network-status,
+    .dialogue-actions,
+    .poster-overlay,
+    #search-loading-overlay {
+        display: none !important;
+    }
+    
+    body {
+        background: white !important;
+        color: black !important;
+    }
+    
+    .movie-card {
+        break-inside: avoid;
+        margin-bottom: 1rem;
+        border: 1px solid #ccc;
+    }
+    
+    .card-body {
+        background: white !important;
+    }
+}
+
+/* ===== 포커스 스타일 ===== */
+.form-control:focus,
+.btn:focus,
+.movie-card-image:focus {
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+    outline: none;
+}
+
+.movie-card-image[tabindex] {
+    outline: none;
+}
+
+.movie-card-image:focus {
+    outline: 3px solid var(--bs-primary);
+    outline-offset: 2px;
+}
+
+/* ===== GPU 가속 활성화 ===== */
+.movie-card,
+.poster-overlay,
+.play-icon {
+    will-change: transform;
+}
+
+.movie-card-image img {
+    will-change: transform;
+}
+
+.movie-card:hover {
+    transform: translateZ(0) translateY(-8px) scale(1.02);
+}
+
+/* ===== 로딩 상태에서 배경 스크롤 방지 ===== */
+body.loading-active {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+}

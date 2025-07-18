@@ -1,0 +1,39 @@
+<!-- 영화 카드 섹션: models.py MovieTable, DialogueTable 구조 반영 -->
+{% if movies %}
+<section class="movies-section">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h4 mb-0">
+            <i class="fas fa-film me-2"></i>검색 결과
+            <span class="badge bg-secondary ms-2">{{ movies|length }}</span>
+        </h2>
+        
+        <!-- 정렬 옵션 -->
+        <div class="d-flex gap-2">
+            <select id="sort-select" class="form-select form-select-sm bg-dark border-secondary text-white" style="width: auto;">
+                <option value="relevance">관련성 순</option>
+                <option value="movie_title">영화명 순</option>
+                <option value="release_year">개봉년도 순</option>
+                <option value="view_count">조회수 순</option>
+            </select>
+            <button id="download-results" class="btn btn-outline-info btn-sm">
+                <i class="fas fa-download"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div class="row g-4" id="movies-container">
+        {% for movie in movies %}
+            {% include 'components/movie_card.html' %}
+        {% endfor %}
+    </div>
+    
+    <!-- 더 많은 결과 버튼 -->
+    {% if has_more_results %}
+    <div class="text-center mt-5">
+        <button id="load-more" class="btn btn-outline-primary btn-lg">
+            <i class="fas fa-plus me-2"></i>더 많은 결과 보기 ({{ total_results|add:"-5" }}개 더)
+        </button>
+    </div>
+    {% endif %}
+</section>
+{% endif %}

@@ -1,0 +1,832 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if message %}{{ message }} - {% endif %}플레이프레이즈 - 영화 대사 검색</title>
+    <meta name="description" content="영화 속 실제 대사를 검색하고 클립으로 감상하세요. playphrase.me와 IMDB 데이터를 활용한 한글 번역 서비스">
+    <meta name="keywords" content="영화, 대사, 클립, 번역, 검색, playphrase, 영어학습">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- 사용자 정의 CSS -->
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    
+    <!-- CSRF 토큰 메타 태그 -->
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    
+    <!-- 구조화된 데이터 -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "플레이프레이즈",
+        "description": "영화 속 실제 대사를 검색하고 클립으로 감상하세요",
+        "url": "{{ request.build_absolute_uri }}",
+        "applicationCategory": "Entertainment",
+        "operatingSystem": "Web"
+    }
+    </script>
+</head>
+<body class="bg-dark text-white">
+    <!-- 네트워크 상태 표시 -->
+    <div id="network-status" class="alert alert-warning position-fixed top-0 start-50 translate-middle-x mt-3" style="display: none; z-index: 1060;">
+        <i class="fas fa-wifi"></i> 오프라인 상태입니다. 일부 기능이 제한될 수 있습니다.
+    </div>
+
+    <!-- 로딩 오버레이 (새로운 검색어 처리 시) -->
+    <div id="search-loading-overlay" class="position-fixed top-0 start-0 w-100 h-100 d-none" style="z-index: 2000; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(5px);">
+        <div class="d-flex flex-column align-items-center justify-content-center h-100">
+            <!-- 메인 로딩 스피너 -->
+            <div class="loading-spinner mb-4">
+                <div class="spinner-ring">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+            </div>
+            
+            <!-- 로딩 메시지 -->
+            <div class="text-center">
+                <h4 id="loading-title" class="text-white mb-3">새로운 영화 대사를 찾고 있습니다...</h4>
+                <p id="loading-message" class="text-light opacity-75 mb-4">외부 API에서 데이터를 가져오는 중입니다</p>
+                
+                <!-- 진행 단계 표시 -->
+                <div class="loading-steps">
+                    <div class="step" id="step-search">
+                        <i class="fas fa-search step-icon"></i>
+                        <span class="step-text">검색 중...</span>
+                    </div>
+                    <div class="step" id="step-fetch">
+                        <i class="fas fa-cloud-download-alt step-icon"></i>
+                        <span class="step-text">데이터 가져오는 중...</span>
+                    </div>
+                    <div class="step" id="step-process">
+                        <i class="fas fa-cogs step-icon"></i>
+                        <span class="step-text">데이터 처리 중...</span>
+                    </div>
+                    <div class="step" id="step-save">
+                        <i class="fas fa-save step-icon"></i>
+                        <span class="step-text">저장 중...</span>
+                    </div>
+                </div>
+                
+                <!-- 프로그레스 바 -->
+                <div class="progress mt-4" style="height: 6px; width: 300px; margin: 0 auto;">
+                    <div id="search-progress" class="progress-bar bg-primary progress-bar-striped progress-bar-animated" 
+                         role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                    </div>
+                </div>
+                
+                <!-- 예상 시간 -->
+                <small class="text-muted mt-3 d-block">예상 소요 시간: 5-10초</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- 메인 컨테이너 -->
+    <div class="container py-4">
+        <!-- 헤더 섹션 -->
+        <header class="text-center mb-5">
+            <div class="d-flex align-items-center justify-content-center gap-4 mb-4">
+                <!-- 프로필 이미지 -->
+                <img
+                    src="{% static 'img/cskang.jpg' %}"
+                    alt="Profile"
+                    class="profile-image rounded-circle border border-3 border-light shadow-lg"
+                    onclick="location.href='{% url 'phrase:index' %}'"
+                    onerror="this.outerHTML='<div class=\'profile-image rounded-circle bg-primary d-flex align-items-center justify-content-center\' style=\'font-size: 2rem;\'>🎬</div>'"
+                />
+                
+                <!-- 제목 및 설명 -->
+                <div class="d-flex flex-column text-start">
+                    <h1 class="display-3 fw-bold text-gradient mb-2">플레이프레이즈</h1>
+                    <p class="lead text-light opacity-75 mb-0">영화 속 실제 대사를 검색하고 클립으로 감상하세요</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- 설명 섹션 -->
+        <section class="mb-4">
+            <div class="d-flex flex-column flex-sm-row gap-3 align-items-center">
+                <div class="flex-fill bg-dark bg-opacity-50 border border-secondary rounded p-3 text-center">
+                    <p class="mb-0 text-light opacity-75">
+                        Django 기반 영화 대사 검색 서비스 - <strong>{{ total_results|default:0 }}개 검색 결과</strong>
+                        {% if from_cache %} (캐시됨){% endif %}
+                    </p>
+                </div>
+                <div class="flex-shrink-0 d-flex gap-2">
+                    <!-- 기본 링크들 -->
+                    <a href="{% url 'phrase:korean_translation_status' %}" class="btn btn-outline-info btn-sm">
+                        <i class="fas fa-language"></i> 번역 상태
+                    </a>
+                    <a href="{% url 'phrase:debug_view' %}" class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-bug"></i> 디버그
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- 검색 폼 섹션: 반응형 최적화 버전 (name 속성 충돌 해결) -->
+        <section class="search-section mb-5">
+            <form id="search-form" method="POST" action="{% url 'phrase:process_text' %}">
+                {% csrf_token %}
+                
+                <!-- 숨겨진 통합 입력 필드 (실제 서버로 전송) -->
+                <input type="hidden" id="unified-search-input" name="user_text" value="{{ message|default:'' }}">
+                
+                <!-- 데스크톱용 검색바 (md 이상) -->
+                <div class="d-none d-md-block">
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-dark border-secondary px-3">
+                            <i class="fas fa-search text-primary"></i>
+                        </span>
+                        <input 
+                            type="text" 
+                            id="search-input-desktop"
+                            class="form-control bg-dark border-secondary text-white"
+                            placeholder="한글 또는 영어 구문을 입력하세요... (최대 500자)"
+                            value="{{ message|default:'' }}"
+                            autocomplete="off"
+                            autofocus
+                            maxlength="500"
+                            aria-label="검색어 입력"
+                        />
+                        <button type="button" id="clear-search-desktop" class="btn btn-outline-secondary {% if not message %}d-none{% endif %}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <button 
+                            type="submit" 
+                            class="btn btn-primary px-4"
+                            aria-label="검색 실행"
+                        >
+                            <i class="fas fa-search me-2"></i>검색
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 모바일/태블릿용 검색바 (sm 이하) -->
+                <div class="d-md-none">
+                    <!-- 검색 입력창 -->
+                    <div class="position-relative mb-2">
+                        <input 
+                            type="text" 
+                            id="search-input-mobile"
+                            class="form-control form-control-lg bg-dark border-secondary text-white ps-5 pe-5"
+                            placeholder="검색어 입력... (최대 500자)"
+                            value="{{ message|default:'' }}"
+                            autocomplete="off"
+                            maxlength="500"
+                            aria-label="검색어 입력"
+                            style="padding-right: 4rem !important;"
+                        />
+                        <!-- 왼쪽 돋보기 아이콘 -->
+                        <div class="position-absolute top-50 start-0 translate-middle-y ps-3" style="pointer-events: none;">
+                            <i class="fas fa-search text-primary"></i>
+                        </div>
+                        <!-- 오른쪽 지우기 버튼 -->
+                        <button 
+                            type="button" 
+                            id="clear-search-mobile" 
+                            class="btn btn-link position-absolute top-50 end-0 translate-middle-y pe-3 text-secondary {% if not message %}d-none{% endif %}"
+                            style="border: none; background: none; z-index: 10;"
+                            aria-label="검색어 지우기"
+                        >
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- 검색 버튼 -->
+                    <div class="d-grid">
+                        <button 
+                            type="submit" 
+                            class="btn btn-primary btn-lg"
+                            aria-label="검색 실행"
+                        >
+                            <i class="fas fa-search me-2"></i>검색하기
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 검색 옵션 (모든 화면 크기에서 동일) -->
+                <div class="row mt-3 g-2">
+                    <div class="col-sm-6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="include-korean" checked>
+                            <label class="form-check-label text-light small" for="include-korean">
+                                <i class="fas fa-language me-1"></i>한글 번역 포함 검색
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="exact-match">
+                            <label class="form-check-label text-light small" for="exact-match">
+                                <i class="fas fa-bullseye me-1"></i>정확한 문구만 검색
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 추가 검색 옵션 (접을 수 있는 형태) -->
+                <div class="mt-2">
+                    <button 
+                        class="btn btn-link btn-sm text-muted p-0" 
+                        type="button" 
+                        data-bs-toggle="collapse" 
+                        data-bs-target="#advanced-options" 
+                        aria-expanded="false" 
+                        aria-controls="advanced-options"
+                    >
+                        <i class="fas fa-cog me-1"></i>고급 옵션
+                        <i class="fas fa-chevron-down ms-1"></i>
+                    </button>
+                    
+                    <div class="collapse mt-2" id="advanced-options">
+                        <div class="card bg-dark border-secondary">
+                            <div class="card-body py-2">
+                                <div class="row g-2">
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="form-check form-check-sm">
+                                            <input class="form-check-input" type="checkbox" id="include-subtitles">
+                                            <label class="form-check-label text-light small" for="include-subtitles">
+                                                자막 검색 포함
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="form-check form-check-sm">
+                                            <input class="form-check-input" type="checkbox" id="case-sensitive">
+                                            <label class="form-check-label text-light small" for="case-sensitive">
+                                                대소문자 구분
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-12">
+                                        <select class="form-select form-select-sm bg-dark border-secondary text-white">
+                                            <option value="all">모든 연도</option>
+                                            <option value="2020s">2020년대</option>
+                                            <option value="2010s">2010년대</option>
+                                            <option value="2000s">2000년대</option>
+                                            <option value="classic">그 이전</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            
+            <!-- 검색 제안 (모든 화면 크기에서 동일) -->
+            <div id="search-suggestions" class="mt-3 d-none">
+                <div class="bg-dark border border-secondary rounded p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="text-primary mb-0">
+                            <i class="fas fa-lightbulb me-1"></i>추천 검색어
+                        </h6>
+                        <button id="close-suggestions" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div id="suggestions-list" class="d-flex flex-wrap gap-2">
+                        <!-- 동적으로 채워짐 -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 빠른 검색 버튼들 (모바일에서만 표시) -->
+            <div class="d-md-none mt-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <small class="text-muted">
+                        <i class="fas fa-bolt me-1"></i>빠른 검색
+                    </small>
+                    <button class="btn btn-link btn-sm text-muted p-0" id="refresh-quick-search">
+                        <i class="fas fa-refresh"></i>
+                    </button>
+                </div>
+                <div class="d-flex flex-wrap gap-2" id="quick-search-buttons">
+                    <button type="button" class="btn btn-outline-primary btn-sm quick-search-btn" data-query="hello">
+                        "hello"
+                    </button>
+                    <button type="button" class="btn btn-outline-primary btn-sm quick-search-btn" data-query="thank you">
+                        "thank you"
+                    </button>
+                    <button type="button" class="btn btn-outline-primary btn-sm quick-search-btn" data-query="i love you">
+                        "i love you"
+                    </button>
+                    <button type="button" class="btn btn-outline-primary btn-sm quick-search-btn" data-query="good morning">
+                        "good morning"
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 오류 표시: views.py error 변수 활용 -->
+        {% if error %}
+        <section class="mb-4">
+            <div class="alert alert-danger" role="alert">
+                <h6 class="alert-heading">
+                    <i class="fas fa-exclamation-triangle me-2"></i>검색 결과 없음
+                </h6>
+                <p class="mb-2">{{ error }}</p>
+                <hr>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-danger btn-sm" onclick="document.getElementById('search-input-desktop') && document.getElementById('search-input-desktop').focus() || document.getElementById('search-input-mobile') && document.getElementById('search-input-mobile').focus()">
+                        <i class="fas fa-redo me-1"></i>다시 검색
+                    </button>
+                    <button id="show-popular-on-error" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-fire me-1"></i>인기 검색어 보기
+                    </button>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- 검색 결과 정보: views.py 변수들 활용 -->
+        {% if message %}
+        <section class="search-result-info mb-4">
+            <div class="bg-dark bg-opacity-50 border border-secondary rounded p-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h5 class="text-primary mb-2">
+                            <i class="fas fa-search me-2"></i>검색 결과
+                        </h5>
+                        <div class="d-flex flex-wrap gap-3 align-items-center">
+                            <span class="badge bg-primary fs-6">"{{ message }}"</span>
+                            {% if translated_message %}
+                            <i class="fas fa-arrow-right text-muted"></i>
+                            <span class="badge bg-success fs-6">"{{ translated_message }}"</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-md-end mt-2 mt-md-0">
+                        <div class="text-muted small">
+                            {% if total_results %}
+                            <i class="fas fa-list me-1"></i>{{ total_results }}개 결과
+                            {% endif %}
+                            {% if from_cache %}
+                            <br><i class="fas fa-bolt me-1"></i>캐시에서 로드
+                            {% elif source == 'database' %}
+                            <br><i class="fas fa-database me-1"></i>DB에서 로드
+                            {% else %}
+                            <br><i class="fas fa-cloud me-1"></i>API에서 로드
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- 영화 카드 섹션: models.py MovieTable, DialogueTable 구조 반영 -->
+        {% if movies %}
+        <section class="movies-section">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="h4 mb-0">
+                    <i class="fas fa-film me-2"></i>검색 결과
+                    <span class="badge bg-secondary ms-2">{{ movies|length }}</span>
+                </h2>
+                
+                <!-- 정렬 옵션 -->
+                <div class="d-flex gap-2">
+                    <select id="sort-select" class="form-select form-select-sm bg-dark border-secondary text-white" style="width: auto;">
+                        <option value="relevance">관련성 순</option>
+                        <option value="movie_title">영화명 순</option>
+                        <option value="release_year">개봉년도 순</option>
+                        <option value="view_count">조회수 순</option>
+                    </select>
+                    <button id="download-results" class="btn btn-outline-info btn-sm">
+                        <i class="fas fa-download"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="row g-4" id="movies-container">
+                {% for movie in movies %}
+                <div class="col-lg-3 col-md-4 col-sm-6" data-movie-data='{{ movie|safe }}'>
+                    <div class="movie-card card bg-dark border-secondary h-100" data-movie-index="{{ forloop.counter0 }}">
+                        <!-- 포스터 이미지: models.py MovieTable.poster_url, poster_image 활용 -->
+                        <div class="movie-card-image position-relative overflow-hidden" 
+                             style="cursor: pointer; height: 300px;"
+                             data-bs-toggle="modal" 
+                             data-bs-target="#video-modal"
+                             onclick="openVideoModal(
+                                 '{{ movie.dialogues.0.video_url|default:'' }}',
+                                 '{{ movie.title|default:movie.movie_title|escapejs }}',
+                                 '{{ movie.year|default:movie.release_year }}',
+                                 '{{ movie.country|default:movie.production_country }}',
+                                 '{{ movie.dialogues.0.text|default:movie.dialogues.0.dialogue_phrase|escapejs }}',
+                                 '{{ movie.dialogues.0.text_ko|default:movie.dialogues.0.dialogue_phrase_ko|escapejs }}'
+                             )">
+                            
+                            {% if movie.poster_url %}
+                                <img 
+                                    src="{{ movie.poster_url }}"
+                                    alt="{{ movie.title|default:movie.movie_title }} 포스터"
+                                    class="card-img-top h-100 object-fit-cover"
+                                    style="opacity: 0; transition: opacity 0.3s ease;"
+                                    onload="this.style.opacity='1'; this.parentElement.classList.remove('loading');"
+                                    onerror="handlePosterError(this)"
+                                />
+                            {% elif movie.poster_image_path %}
+                                <img 
+                                    src="{{ movie.poster_image_path }}"
+                                    alt="{{ movie.title|default:movie.movie_title }} 포스터"
+                                    class="card-img-top h-100 object-fit-cover"
+                                    style="opacity: 0; transition: opacity 0.3s ease;"
+                                    onload="this.style.opacity='1'; this.parentElement.classList.remove('loading');"
+                                    onerror="handlePosterError(this)"
+                                />
+                            {% else %}
+                                <div class="poster-placeholder d-flex flex-column align-items-center justify-content-center h-100 bg-secondary bg-opacity-50">
+                                    <i class="fas fa-film text-muted" style="font-size: 3rem;"></i>
+                                    <span class="text-muted mt-2">포스터 없음</span>
+                                </div>
+                            {% endif %}
+                            
+                            <!-- 호버 오버레이 -->
+                            <div class="poster-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" 
+                                 style="background: rgba(0, 0, 0, 0.6); opacity: 0; transition: opacity 0.3s ease;">
+                                <div class="play-icon bg-primary rounded-circle d-flex align-items-center justify-content-center" 
+                                     style="width: 80px; height: 80px; transition: transform 0.3s ease;">
+                                    <i class="fas fa-play text-white" style="font-size: 1.5rem; margin-left: 4px;"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 카드 본문: models.py 필드들 활용 -->
+                        <div class="card-body d-flex flex-column">
+                            <!-- 영화 정보: MovieTable 필드들 -->
+                            <div class="movie-info mb-3">
+                                <h5 class="card-title text-primary mb-2">
+                                    {{ movie.title|default:movie.movie_title }}
+                                </h5>
+                                <div class="movie-meta d-flex flex-wrap gap-2 mb-2">
+                                    {% if movie.year|default:movie.release_year %}
+                                    <span class="badge bg-outline-secondary">{{ movie.year|default:movie.release_year }}</span>
+                                    {% endif %}
+                                    {% if movie.director %}
+                                    <span class="badge bg-outline-secondary">{{ movie.director }}</span>
+                                    {% endif %}
+                                    {% if movie.genre %}
+                                    <span class="badge bg-outline-secondary">{{ movie.genre }}</span>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- 영화 통계: MovieTable.view_count 등 -->
+                                {% if movie.view_count or movie.imdb_rating %}
+                                <div class="movie-stats small text-muted">
+                                    {% if movie.view_count %}
+                                    <i class="fas fa-eye me-1"></i>{{ movie.view_count }}회 조회
+                                    {% endif %}
+                                    {% if movie.imdb_rating %}
+                                    <span class="ms-2"><i class="fas fa-star me-1"></i>{{ movie.imdb_rating }}</span>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- 대사 정보: DialogueTable 필드들 -->
+                            {% if movie.dialogues %}
+                            {% with dialogue=movie.dialogues.0 %}
+                            <div class="dialogue-section mt-auto">
+                                <!-- 영어 대사: DialogueTable.dialogue_phrase -->
+                                <div class="mb-3">
+                                    <h6 class="text-light mb-2">
+                                        <i class="fas fa-quote-left me-1"></i>영어 대사
+                                    </h6>
+                                    <p class="card-text text-light small">
+                                        "{{ dialogue.text|default:dialogue.dialogue_phrase }}"
+                                    </p>
+                                </div>
+                                
+                                <!-- 한글 번역: DialogueTable.dialogue_phrase_ko -->
+                                <div>
+                                    <h6 class="text-success mb-2">
+                                        <i class="fas fa-language me-1"></i>한글 번역
+                                    </h6>
+                                    {% if dialogue.text_ko|default:dialogue.dialogue_phrase_ko %}
+                                    <p class="card-text text-success small db-translated">
+                                        💾 "{{ dialogue.text_ko|default:dialogue.dialogue_phrase_ko }}"
+                                    </p>
+                                    {% else %}
+                                    <p class="card-text text-warning small">
+                                        <i class="fas fa-language me-1"></i>번역 필요
+                                        <button class="btn btn-outline-warning btn-sm ms-2 translate-btn" 
+                                                data-text="{{ dialogue.text|default:dialogue.dialogue_phrase|escapejs }}">
+                                            번역하기
+                                        </button>
+                                    </p>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- 대사 메타데이터 -->
+                                <div class="dialogue-meta mt-2 pt-2 border-top border-secondary">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            {% if dialogue.start_time|default:dialogue.dialogue_start_time %}
+                                            <i class="fas fa-clock me-1"></i>{{ dialogue.start_time|default:dialogue.dialogue_start_time }}
+                                            {% endif %}
+                                        </small>
+                                        <div class="dialogue-actions">
+                                            <button class="btn btn-outline-primary btn-sm copy-dialogue" 
+                                                    title="복사" 
+                                                    data-text="{{ dialogue.text|default:dialogue.dialogue_phrase }}">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endwith %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- 더 많은 결과 버튼 -->
+            {% if has_more_results %}
+            <div class="text-center mt-5">
+                <button id="load-more" class="btn btn-outline-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i>더 많은 결과 보기 ({{ total_results|add:"-5" }}개 더)
+                </button>
+            </div>
+            {% endif %}
+        </section>
+        {% endif %}
+
+        <!-- 인기 검색어 섹션 (동적 로드) -->
+        <section id="popular-section" class="mt-5 d-none">
+            <h3 class="h5 mb-3">
+                <i class="fas fa-fire text-warning me-2"></i>인기 검색어
+            </h3>
+            <div id="popular-searches-container" class="row g-3">
+                <div class="col-12 text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">로딩 중...</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 통계 섹션 (동적 로드) -->
+        <section id="statistics-section" class="mt-5 d-none">
+            <h3 class="h5 mb-3">
+                <i class="fas fa-chart-bar text-success me-2"></i>서비스 통계
+            </h3>
+            <div id="statistics-container" class="row g-3">
+                <div class="col-md-3 col-sm-6">
+                    <div class="bg-dark border border-secondary rounded p-3 text-center">
+                        <div class="display-6 text-primary" id="total-movies">-</div>
+                        <div class="small text-muted">등록된 영화</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="bg-dark border border-secondary rounded p-3 text-center">
+                        <div class="display-6 text-success" id="total-dialogues">-</div>
+                        <div class="small text-muted">영화 대사</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="bg-dark border border-secondary rounded p-3 text-center">
+                        <div class="display-6 text-info" id="total-searches">-</div>
+                        <div class="small text-muted">총 검색 수</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="bg-dark border border-secondary rounded p-3 text-center">
+                        <div class="display-6 text-warning" id="translation-rate">-</div>
+                        <div class="small text-muted">번역 완료율</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- 비디오 모달 -->
+    <div class="modal fade" id="video-modal" tabindex="-1" aria-labelledby="video-modal-label" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content bg-dark border-secondary">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-primary" id="modal-title">영화 제목</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <!-- 비디오 로딩 -->
+                    <div id="video-loading" class="d-flex flex-column align-items-center justify-content-center py-5">
+                        <div class="spinner-border text-primary mb-3" role="status">
+                            <span class="visually-hidden">비디오 로딩 중...</span>
+                        </div>
+                        <p class="text-light">비디오를 불러오는 중...</p>
+                    </div>
+                    
+                    <!-- 비디오 플레이어 -->
+                    <video id="modal-video" class="w-100 d-none" controls preload="metadata" loop autoplay muted>
+                        <source id="video-source" src="" type="video/mp4">
+                        <source id="video-source-webm" src="" type="video/webm">
+                        <source id="video-source-ogg" src="" type="video/ogg">
+                        브라우저가 비디오를 지원하지 않습니다.
+                    </video>
+                    
+                    <!-- 비디오 오류 -->
+                    <div id="video-error" class="d-none">
+                        <div class="error-content text-center py-5">
+                            <i class="fas fa-exclamation-triangle text-danger mb-3" style="font-size: 3rem;"></i>
+                            <h4 class="text-danger mb-3">비디오 재생 오류</h4>
+                            <p id="error-message" class="text-light mb-3">오류 메시지</p>
+                            <div class="error-details mb-4">
+                                <p class="text-muted mb-1">비디오 URL:</p>
+                                <code id="error-url" class="text-warning">URL 표시</code>
+                            </div>
+                            <button onclick="retryVideo()" class="btn btn-primary">
+                                <i class="fas fa-redo me-2"></i>다시 시도
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <!-- 영어 대사 -->
+                    <div class="w-100 mb-3">
+                        <h6 class="text-light mb-2">
+                            <i class="fas fa-quote-left me-1"></i>영어 대사
+                        </h6>
+                        <p id="modal-text-en" class="text-light mb-0">영어 대사가 여기에 표시됩니다.</p>
+                    </div>
+                    
+                    <!-- 한글 번역 -->
+                    <div class="w-100">
+                        <h6 class="text-success mb-2">
+                            <i class="fas fa-language me-1"></i>한글 번역
+                        </h6>
+                        <p id="modal-text-ko" class="text-success mb-0">한글 번역이 여기에 표시됩니다.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 토스트 컨테이너 -->
+    <div id="toast-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1100;">
+        <!-- 동적으로 토스트 추가됨 -->
+    </div>
+
+    <!-- Bootstrap 5 JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Django 템플릿 데이터 전달 -->
+    <script>
+        // 실제 Django views.py에서 전달된 데이터
+        window.djangoData = {
+            csrf_token: '{{ csrf_token }}',
+            
+            // URL 패턴 (API 미구현 시 임시 처리)
+            urls: {
+                {% comment %}
+                // API가 구현되면 아래 주석을 해제하세요:
+                popular_searches: '{% url "phrase:popular_searches_api" %}',
+                statistics: '{% url "phrase:statistics_api" %}',
+                bulk_translate: '{% url "phrase:bulk_translate_dialogues" %}'
+                 {% endcomment %}
+                popular_searches: '/api/search/',  // 임시로 기존 API 사용
+                statistics: '/api/schema/',  // 임시로 기존 API 사용  
+                bulk_translate: ''  // 미구현
+            },
+            
+            // 현재 검색 정보
+            search: {
+                query: "{{ message|escapejs }}",
+                translated: "{{ translated_message|escapejs }}",
+                phrase: "{{ search_used|escapejs }}",
+                hasResults: {{ movies|yesno:"true,false" }},
+                totalResults: {{ total_results|default:0 }},
+                fromCache: {{ from_cache|yesno:"true,false" }},
+                source: "{{ source|default:'database' }}"
+            },
+            
+            // 설정
+            settings: {
+                maxSearchLength: 500,  // RequestTable.request_phrase max_length
+                minSearchLength: 2,
+                debounceDelay: 300,
+                cacheTimeout: 600000
+            }
+        };
+
+        // 전역 함수들 (HTML에서 호출됨)
+        window.handlePosterError = function(img) {
+            const container = img.parentElement;
+            container.innerHTML = `
+                <div class="poster-placeholder d-flex flex-column align-items-center justify-content-center h-100 bg-secondary bg-opacity-50">
+                    <i class="fas fa-film text-muted" style="font-size: 3rem;"></i>
+                    <span class="text-muted mt-2">포스터 없음</span>
+                </div>
+            `;
+        };
+
+        window.openVideoModal = function(videoUrl, title, year, country, textEn, textKo) {
+            console.log('🎬 비디오 모달 열기:', { videoUrl, title, year, country, textEn, textKo });
+            
+            // 모달 제목 설정
+            const modalTitle = document.getElementById('modal-title');
+            if (modalTitle) {
+                modalTitle.textContent = `${title} (${year}, ${country})`;
+            }
+
+            // 영어 대사 설정
+            const modalTextEn = document.getElementById('modal-text-en');
+            if (modalTextEn) {
+                modalTextEn.textContent = `"${textEn}"`;
+            }
+
+            // 한글 번역 설정
+            const modalTextKo = document.getElementById('modal-text-ko');
+            if (modalTextKo) {
+                if (textKo && textKo.trim()) {
+                    modalTextKo.innerHTML = `💾 "${textKo}"`;
+                } else {
+                    modalTextKo.innerHTML = '<span class="text-muted">번역이 필요합니다.</span>';
+                }
+            }
+
+            // 비디오 설정 (무한 루프 자동 재생)
+            const videoLoading = document.getElementById('video-loading');
+            const modalVideo = document.getElementById('modal-video');
+            const videoError = document.getElementById('video-error');
+
+            // 초기 상태
+            if (videoLoading) videoLoading.classList.remove('d-none');
+            if (modalVideo) modalVideo.classList.add('d-none');
+            if (videoError) videoError.classList.add('d-none');
+
+            if (videoUrl && videoUrl.trim()) {
+                const videoSource = document.getElementById('video-source');
+                if (videoSource) {
+                    videoSource.src = videoUrl;
+                    
+                    // 비디오 속성 설정 (무한 루프 + 자동재생)
+                    modalVideo.loop = true;
+                    modalVideo.autoplay = true;
+                    modalVideo.muted = true; // 자동재생을 위해 음소거 (브라우저 정책)
+                    
+                    modalVideo.load();
+                    
+                    modalVideo.addEventListener('loadeddata', function() {
+                        console.log('📹 비디오 데이터 로드 완료 - 자동 재생 시작');
+                        videoLoading.classList.add('d-none');
+                        modalVideo.classList.remove('d-none');
+                        
+                        // 자동 재생 시도
+                        modalVideo.play().then(() => {
+                            console.log('✅ 비디오 자동 재생 성공');
+                            // 사용자가 클릭하면 음소거 해제
+                            modalVideo.addEventListener('click', function() {
+                                this.muted = false;
+                                console.log('🔊 음소거 해제');
+                            }, { once: true });
+                        }).catch(error => {
+                            console.warn('⚠️ 자동 재생 실패:', error);
+                        });
+                    }, { once: true });
+                    
+                    modalVideo.addEventListener('error', function() {
+                        videoLoading.classList.add('d-none');
+                        videoError.classList.remove('d-none');
+                        
+                        const errorMessage = document.getElementById('error-message');
+                        const errorUrl = document.getElementById('error-url');
+                        if (errorMessage) errorMessage.textContent = '비디오를 로드할 수 없습니다.';
+                        if (errorUrl) errorUrl.textContent = videoUrl;
+                    }, { once: true });
+                }
+            } else {
+                videoLoading.classList.add('d-none');
+                videoError.classList.remove('d-none');
+                
+                const errorMessage = document.getElementById('error-message');
+                const errorUrl = document.getElementById('error-url');
+                if (errorMessage) errorMessage.textContent = '비디오 URL이 없습니다.';
+                if (errorUrl) errorUrl.textContent = '알 수 없음';
+            }
+        };
+
+        window.retryVideo = function() {
+            console.log('🔄 비디오 재시도');
+            const modalVideo = document.getElementById('modal-video');
+            if (modalVideo) {
+                modalVideo.load();
+            }
+        };
+    </script>
+    
+    <!-- 사용자 정의 JavaScript -->
+    <script src="{% static 'js/index.js' %}"></script>
+    {% include 'partials/scripts_optimized.html' %}
+</body>
+</html>

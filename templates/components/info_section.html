@@ -1,0 +1,20 @@
+<!-- 설명 섹션 -->
+<section class="mb-4">
+    <div class="d-flex flex-column flex-sm-row gap-3 align-items-center">
+        <div class="flex-fill bg-dark bg-opacity-50 border border-secondary rounded p-3 text-center">
+            <p class="mb-0 text-light opacity-75">
+                듣고 싶은 구문의 영화 쪼가리 검색 서비스 - <strong>{{ total_results|default:0 }}개 검색 결과</strong>
+                {% if from_cache %} (캐시됨){% endif %}
+            </p>
+        </div>
+        <div class="flex-shrink-0 d-flex gap-2">
+            <!-- 기본 링크들 -->
+            <a href="{% url 'phrase:korean_translation_status' %}" class="btn btn-outline-info btn-sm">
+                <i class="fas fa-language"></i> 번역 상태
+            </a>
+            <a href="{% url 'phrase:debug_view' %}" class="btn btn-outline-success btn-sm">
+                <i class="fas fa-bug"></i> 디버그
+            </a>
+        </div>
+    </div>
+</section>

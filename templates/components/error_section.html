@@ -1,0 +1,20 @@
+<!-- 오류 표시: views.py error 변수 활용 -->
+{% if error %}
+<section class="mb-4">
+    <div class="alert alert-danger" role="alert">
+        <h6 class="alert-heading">
+            <i class="fas fa-exclamation-triangle me-2"></i>검색 결과 없음
+        </h6>
+        <p class="mb-2">{{ error }}</p>
+        <hr>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-danger btn-sm" onclick="document.getElementById('search-input-desktop') && document.getElementById('search-input-desktop').focus() || document.getElementById('search-input-mobile') && document.getElementById('search-input-mobile').focus()">
+                <i class="fas fa-redo me-1"></i>다시 검색
+            </button>
+            <button id="show-popular-on-error" class="btn btn-outline-primary btn-sm">
+                <i class="fas fa-fire me-1"></i>인기 검색어 보기
+            </button>
+        </div>
+    </div>
+</section>
+{% endif %}
