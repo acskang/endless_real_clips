@@ -133,15 +133,6 @@ class RequestTable(BaseModel):
         db_table = 'request_table'
         verbose_name = "검색 요청"
         verbose_name_plural = "검색 요청들"
-        indexes = [
-            models.Index(fields=['request_phrase']),
-            models.Index(fields=['request_korean']),
-            models.Index(fields=['search_count', '-last_searched_at']),
-            models.Index(fields=['-last_searched_at']),
-            models.Index(fields=['translation_quality']),
-            models.Index(fields=['is_active', '-search_count']),
-            models.Index(fields=['created_at', 'is_active']),
-        ]
         constraints = [
             models.CheckConstraint(check=models.Q(search_count__gte=0), name='positive_search_count'),
             models.CheckConstraint(check=models.Q(result_count__gte=0), name='positive_result_count'),
@@ -253,18 +244,6 @@ class MovieTable(BaseModel):
         verbose_name = "영화"
         verbose_name_plural = "영화들"
         unique_together = [('movie_title', 'release_year', 'director')]
-        indexes = [
-            models.Index(fields=['movie_title']),
-            models.Index(fields=['release_year']),
-            models.Index(fields=['director']),
-            models.Index(fields=['genre']),
-            models.Index(fields=['imdb_rating']),
-            models.Index(fields=['data_quality']),
-            models.Index(fields=['-view_count']),
-            models.Index(fields=['movie_title', 'release_year']),
-            models.Index(fields=['is_active', 'data_quality']),
-            models.Index(fields=['-created_at', 'is_active']),
-        ]
         constraints = [
             models.CheckConstraint(check=models.Q(view_count__gte=0), name='positive_view_count'),
             models.CheckConstraint(check=models.Q(like_count__gte=0), name='positive_like_count'),
@@ -288,6 +267,8 @@ class MovieTable(BaseModel):
         if self.original_title and self.original_title != self.movie_title:
             return f"{self.movie_title} ({self.original_title})"
         return self.movie_title
+
+
 
 class DialogueTable(BaseModel):
     """대사테이블 - 영화 대사 정보 저장"""
@@ -395,19 +376,6 @@ class DialogueTable(BaseModel):
         db_table = 'dialogue_table'
         verbose_name = "영화 대사"
         verbose_name_plural = "영화 대사들"
-        indexes = [
-            models.Index(fields=['dialogue_phrase']),
-            models.Index(fields=['dialogue_phrase_ko']),
-            models.Index(fields=['video_url']),
-            models.Index(fields=['dialogue_start_time']),
-            models.Index(fields=['translation_method']),
-            models.Index(fields=['translation_quality']),
-            models.Index(fields=['-play_count']),
-            models.Index(fields=['search_vector']),
-            models.Index(fields=['movie', 'dialogue_start_time']),
-            models.Index(fields=['movie', '-created_at']),
-            models.Index(fields=['is_active', 'translation_quality']),
-        ]
         constraints = [
             models.CheckConstraint(check=models.Q(play_count__gte=0), name='positive_play_count'),
             models.CheckConstraint(check=models.Q(like_count__gte=0), name='positive_dialogue_like_count'),
@@ -481,6 +449,8 @@ class DialogueTable(BaseModel):
             return f"{minutes:02d}:{seconds:02d}"
         return "알 수 없음"
 
+
+
 # ===== 사용자 활동 및 분석 모델 =====
 
 class UserSearchQuery(BaseModel):
@@ -499,13 +469,6 @@ class UserSearchQuery(BaseModel):
     objects = UserSearchQueryManager()
     active = ActiveManager()
     
-    class Meta:
-        indexes = [
-            models.Index(fields=['original_query']),
-            models.Index(fields=['session_key', '-created_at']),
-            models.Index(fields=['-search_count']),
-            models.Index(fields=['has_results', '-created_at']),
-        ]
 
 class UserSearchResult(BaseModel):
     """사용자 검색 결과 연결"""
@@ -519,10 +482,6 @@ class UserSearchResult(BaseModel):
     
     class Meta:
         unique_together = ['search_query', 'dialogue']
-        indexes = [
-            models.Index(fields=['-relevance_score']),
-            models.Index(fields=['click_position']),
-        ]
 
 # ===== 캐시 무효화 모델 =====
 
