@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # phrase/managers.py
 """
-Django 모델 매니저 정의
+Django 모델 매니저 정의 (일본어/중국어 제거)
 - 커스텀 쿼리셋 및 매니저
 - 성능 최적화된 쿼리 메소드
 - 재사용 가능한 비즈니스 로직
@@ -253,12 +253,10 @@ class DialogueManager(models.Manager):
         ).exclude(duration_seconds__isnull=True)
     
     def search_text(self, query):
-        """텍스트 검색 (다국어 지원)"""
+        """텍스트 검색 (영어/한국어만 지원)"""
         return self.filter(
             models.Q(dialogue_phrase__icontains=query) |
             models.Q(dialogue_phrase_ko__icontains=query) |
-            models.Q(dialogue_phrase_ja__icontains=query) |
-            models.Q(dialogue_phrase_zh__icontains=query) |
             models.Q(search_vector__icontains=query.lower())
         ).filter(is_active=True).distinct()
     
@@ -289,20 +287,11 @@ class DialogueManager(models.Manager):
             return None
     
     def needs_translation(self, language='ko'):
-        """번역이 필요한 대사들"""
+        """번역이 필요한 대사들 (한국어만 지원)"""
         if language == 'ko':
             return self.without_korean()
-        elif language == 'ja':
-            return self.filter(
-                models.Q(dialogue_phrase_ja__isnull=True) | 
-                models.Q(dialogue_phrase_ja='')
-            ).filter(is_active=True)
-        elif language == 'zh':
-            return self.filter(
-                models.Q(dialogue_phrase_zh__isnull=True) | 
-                models.Q(dialogue_phrase_zh='')
-            ).filter(is_active=True)
         else:
+            # 한국어 외 다른 언어는 지원하지 않음
             return self.none()
     
     def update_search_vectors_bulk(self):

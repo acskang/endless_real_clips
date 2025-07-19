@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # phrase/models.py
 """
-최적화된 Django 모델 정의 - Primary Key 충돌 해결
+최적화된 Django 모델 정의 - Primary Key 충돌 해결 (일본어/중국어 제거)
 """
 import os
 import uuid
@@ -88,11 +88,10 @@ class BaseModel(models.Model):
 
 class RequestTable(BaseModel):
     """요청테이블 - 사용자 검색 요청을 저장"""
-    # ✅ primary_key=True 제거, unique=True만 유지
     request_phrase = models.CharField(
         max_length=254,
-        unique=True,  # ✅ 중복 방지만 유지
-        db_index=True,  # ✅ 인덱스는 별도 추가
+        unique=True,
+        db_index=True,
         validators=[MinLengthValidator(1), MaxLengthValidator(500)],
         verbose_name="요청구문"
     )
@@ -269,7 +268,6 @@ class MovieTable(BaseModel):
         return self.movie_title
 
 
-
 class DialogueTable(BaseModel):
     """대사테이블 - 영화 대사 정보 저장"""
     movie = models.ForeignKey(
@@ -291,17 +289,7 @@ class DialogueTable(BaseModel):
         verbose_name="한글 대사"
     )
     
-    dialogue_phrase_ja = models.TextField(
-        blank=True,
-        null=True,
-        verbose_name="일본어 대사"
-    )
-    
-    dialogue_phrase_zh = models.TextField(
-        blank=True,
-        null=True,
-        verbose_name="중국어 대사"
-    )
+    # 일본어, 중국어 필드 제거됨
     
     dialogue_start_time = models.CharField(max_length=20, verbose_name="시작 시간")
     dialogue_end_time = models.CharField(max_length=20, blank=True, verbose_name="종료 시간")
@@ -450,7 +438,6 @@ class DialogueTable(BaseModel):
         return "알 수 없음"
 
 
-
 # ===== 사용자 활동 및 분석 모델 =====
 
 class UserSearchQuery(BaseModel):
@@ -592,4 +579,4 @@ def cleanup_old_data(days=30):
 
 # ===== 최종 설정 =====
 
-logger.info("최적화된 모델 정의 완료 (Primary Key 충돌 해결)")
+logger.info("최적화된 모델 정의 완료 (일본어/중국어 필드 제거)")
