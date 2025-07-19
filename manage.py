@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 def main():
     """Run administrative tasks."""
     if os.getenv('ENVIRONMENT') == 'development':
+        print("Running in development mode")
         # Load environment variables from .env_local
         ENV_DIR = os.path.expanduser('~/ganzskang/endless_real_clips/dj/')
         DOTENV_PATH = os.path.join(ENV_DIR, '.env_local')
@@ -15,6 +16,7 @@ def main():
         # Load local settings
         os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project.settings.local')
     elif os.getenv('ENVIRONMENT') == 'production':
+        print("Running in production mode")
         os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project.settings.production')
     else:
         print("Environment variable 'ENVIRONMENT' not set.")

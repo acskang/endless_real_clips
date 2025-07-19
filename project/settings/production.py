@@ -2,11 +2,13 @@
 운영 환경 설정
 """
 import os
-from .base import *
+from os.path import abspath, dirname, join
 from dotenv import load_dotenv
+from .base import *
 
-ENV_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DOTENV_PATH = os.path.join(ENV_DIR, '.env_prod')
+current_dir = dirname(abspath(__file__))
+env_dir = dirname(dirname(dirname(current_dir)))
+DOTENV_PATH = os.path.join(env_dir, '.env_prod')
 load_dotenv(dotenv_path=DOTENV_PATH)
 
 # Debugging and allowed hosts
