@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 # phrase/models.py
 """
-최적화된 Django 모델 정의 - Primary Key 충돌 해결 (일본어/중국어 제거)
+MySQL 호환성을 위한 Django 모델 정의 수정
+- TEXT 필드의 인덱스 키 길이 문제 해결
+- MySQL 제약사항 고려한 최적화
 """
 import os
 import uuid
@@ -24,7 +26,20 @@ from .managers import (
 
 logger = logging.getLogger(__name__)
 
-# ===== 커스텀 필드 및 유틸리티 =====
+# ===== MySQL 호환성을 위한 커스텀 필드 =====
+
+class MySQLTextField(models.TextField):
+    """MySQL 호환성을 위한 TextField - 인덱스 키 길이 제한"""
+    def __init__(self, *args, **kwargs):
+        # MySQL TEXT 필드의 인덱스 키 길이 제한 (InnoDB 기본값: 767바이트, utf8mb4: ~191자)
+        self.mysql_key_length = kwargs.pop('mysql_key_length', 191)
+        super().__init__(*args, **kwargs)
+    
+    def db_type(self, connection):
+        if connection.vendor == 'mysql':
+            # MySQL에서는 TEXT 타입 사용
+            return 'TEXT'
+        return super().db_type(connection)
 
 class OptimizedCharField(models.CharField):
     """최적화된 CharField (자동 인덱싱 및 검증)"""
@@ -87,9 +102,9 @@ class BaseModel(models.Model):
 # ===== 메인 모델들 =====
 
 class RequestTable(BaseModel):
-    """요청테이블 - 사용자 검색 요청을 저장"""
+    """요청테이블 - 사용자 검색 요청을 저장 (MySQL 호환성 개선)"""
     request_phrase = models.CharField(
-        max_length=254,
+        max_length=500,  # TEXT에서 VARCHAR로 변경하여 unique 제약조건 문제 해결
         unique=True,
         db_index=True,
         validators=[MinLengthValidator(1), MaxLengthValidator(500)],
@@ -242,11 +257,18 @@ class MovieTable(BaseModel):
         db_table = 'movie_table'
         verbose_name = "영화"
         verbose_name_plural = "영화들"
-        unique_together = [('movie_title', 'release_year', 'director')]
+        # unique_together에서 TEXT 필드 제거 (MySQL 호환성)
         constraints = [
             models.CheckConstraint(check=models.Q(view_count__gte=0), name='positive_view_count'),
             models.CheckConstraint(check=models.Q(like_count__gte=0), name='positive_like_count'),
             models.CheckConstraint(check=models.Q(imdb_rating__gte=0) & models.Q(imdb_rating__lte=10), name='valid_imdb_rating'),
+        ]
+        # 인덱스를 별도로 생성 (MySQL 호환성 고려)
+        indexes = [
+            models.Index(fields=['movie_title', 'release_year'], name='movie_title_year_idx'),
+            models.Index(fields=['director'], name='movie_director_idx'),
+            models.Index(fields=['production_country'], name='movie_country_idx'),
+            models.Index(fields=['imdb_rating'], name='movie_rating_idx'),
         ]
 
     def __str__(self):
@@ -269,7 +291,7 @@ class MovieTable(BaseModel):
 
 
 class DialogueTable(BaseModel):
-    """대사테이블 - 영화 대사 정보 저장"""
+    """대사테이블 - MySQL 호환성 개선"""
     movie = models.ForeignKey(
         MovieTable,
         related_name='dialogues',
@@ -278,18 +300,19 @@ class DialogueTable(BaseModel):
         verbose_name="영화"
     )
     
-    dialogue_phrase = models.TextField(
+    # MySQL 호환성을 위해 MySQLTextField 사용
+    dialogue_phrase = MySQLTextField(
         validators=[MinLengthValidator(1)],
-        verbose_name="영어 대사"
+        verbose_name="영어 대사",
+        mysql_key_length=191  # MySQL utf8mb4에서 안전한 키 길이
     )
     
-    dialogue_phrase_ko = models.TextField(
+    dialogue_phrase_ko = MySQLTextField(
         blank=True,
         null=True,
-        verbose_name="한글 대사"
+        verbose_name="한글 대사",
+        mysql_key_length=191
     )
-    
-    # 일본어, 중국어 필드 제거됨
     
     dialogue_start_time = models.CharField(max_length=20, verbose_name="시작 시간")
     dialogue_end_time = models.CharField(max_length=20, blank=True, verbose_name="종료 시간")
@@ -350,8 +373,11 @@ class DialogueTable(BaseModel):
     play_count = models.PositiveIntegerField(default=0, verbose_name="재생 횟수")
     like_count = models.PositiveIntegerField(default=0, verbose_name="좋아요 수")
     
-    search_vector = models.TextField(
+    # MySQL 호환성을 위해 검색 벡터는 VARCHAR 사용
+    search_vector = models.CharField(
+        max_length=1000,  # TEXT에서 VARCHAR로 변경
         blank=True,
+        db_index=True,  # VARCHAR이므로 인덱스 가능
         verbose_name="검색 벡터",
         help_text="전문 검색을 위한 정규화된 텍스트"
     )
@@ -368,6 +394,14 @@ class DialogueTable(BaseModel):
             models.CheckConstraint(check=models.Q(play_count__gte=0), name='positive_play_count'),
             models.CheckConstraint(check=models.Q(like_count__gte=0), name='positive_dialogue_like_count'),
             models.CheckConstraint(check=models.Q(duration_seconds__gte=0), name='positive_duration'),
+        ]
+        # MySQL 호환 인덱스 설정
+        indexes = [
+            models.Index(fields=['movie', 'dialogue_start_time'], name='dialogue_movie_time_idx'),
+            models.Index(fields=['translation_quality'], name='dialogue_quality_idx'),
+            models.Index(fields=['translation_method'], name='dialogue_method_idx'),
+            models.Index(fields=['play_count'], name='dialogue_play_count_idx'),
+            models.Index(fields=['search_vector'], name='dialogue_search_idx'),
         ]
 
     def __str__(self):
@@ -397,7 +431,7 @@ class DialogueTable(BaseModel):
         super().save(*args, **kwargs)
     
     def update_search_vector(self):
-        """검색 벡터 업데이트"""
+        """검색 벡터 업데이트 - MySQL 호환성 고려"""
         import re
         
         texts = [self.dialogue_phrase]
@@ -410,7 +444,9 @@ class DialogueTable(BaseModel):
             normalized = re.sub(r'\s+', ' ', normalized).strip()
             normalized_texts.append(normalized)
         
-        self.search_vector = ' '.join(normalized_texts)
+        # VARCHAR 필드 길이 제한 고려
+        search_text = ' '.join(normalized_texts)
+        self.search_vector = search_text[:1000]  # max_length=1000 제한
     
     def auto_translate_korean(self):
         """자동 한글 번역"""
@@ -456,6 +492,11 @@ class UserSearchQuery(BaseModel):
     objects = UserSearchQueryManager()
     active = ActiveManager()
     
+    class Meta:
+        db_table = 'user_search_query'
+        verbose_name = "사용자 검색 쿼리"
+        verbose_name_plural = "사용자 검색 쿼리들"
+
 
 class UserSearchResult(BaseModel):
     """사용자 검색 결과 연결"""
@@ -468,6 +509,9 @@ class UserSearchResult(BaseModel):
     active = ActiveManager()
     
     class Meta:
+        db_table = 'user_search_result'
+        verbose_name = "사용자 검색 결과"
+        verbose_name_plural = "사용자 검색 결과들"
         unique_together = ['search_query', 'dialogue']
 
 # ===== 캐시 무효화 모델 =====
@@ -486,6 +530,9 @@ class CacheInvalidation(models.Model):
     objects = CacheInvalidationManager()
     
     class Meta:
+        db_table = 'cache_invalidation'
+        verbose_name = "캐시 무효화"
+        verbose_name_plural = "캐시 무효화들"
         indexes = [
             models.Index(fields=['model_name', 'instance_id']),
             models.Index(fields=['-created_at']),
@@ -577,6 +624,45 @@ def cleanup_old_data(days=30):
         'cache_records_deleted': deleted_cache
     }
 
+# ===== MySQL 호환성 체크 =====
+
+def check_mysql_compatibility():
+    """MySQL 호환성 검사"""
+    from django.db import connection
+    
+    if connection.vendor == 'mysql':
+        with connection.cursor() as cursor:
+            # MySQL 버전 확인
+            cursor.execute("SELECT VERSION()")
+            version = cursor.fetchone()[0]
+            
+            # InnoDB 엔진 지원 확인
+            cursor.execute("SHOW ENGINES")
+            engines = cursor.fetchall()
+            innodb_support = any('InnoDB' in str(engine) for engine in engines)
+            
+            # utf8mb4 문자셋 지원 확인
+            cursor.execute("SHOW CHARACTER SET LIKE 'utf8mb4'")
+            utf8mb4_support = bool(cursor.fetchone())
+            
+            compatibility_info = {
+                'mysql_version': version,
+                'innodb_support': innodb_support,
+                'utf8mb4_support': utf8mb4_support,
+                'recommendations': []
+            }
+            
+            if not innodb_support:
+                compatibility_info['recommendations'].append('InnoDB 엔진 활성화 필요')
+            
+            if not utf8mb4_support:
+                compatibility_info['recommendations'].append('utf8mb4 문자셋 지원 필요')
+            
+            logger.info(f"MySQL 호환성 체크 완료: {compatibility_info}")
+            return compatibility_info
+    
+    return {'message': 'MySQL이 아닌 데이터베이스입니다'}
+
 # ===== 최종 설정 =====
 
-logger.info("최적화된 모델 정의 완료 (일본어/중국어 필드 제거)")
+logger.info("MySQL 호환성 개선된 모델 정의 완료")
