@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# dj/phrase/application/clean_data.py
+# dj/phrase/utils/clean_data.py
 """
 playphrase.me 데이터 정리 및 추출 모듈 - 4개 모듈 완전 최적화
 - models.py, managers.py, views.py, get_movie_info.py와 완벽 연동
@@ -14,7 +14,7 @@ from django.core.cache import cache
 from django.db import transaction, models
 from django.utils import timezone
 from phrase.models import MovieTable, DialogueTable, RequestTable
-from phrase.application.get_imdb_poster_url import get_poster_url, download_poster_image
+from phrase.utils.get_imdb_poster_url import get_poster_url, download_poster_image
 
 logger = logging.getLogger(__name__)
 
@@ -423,7 +423,8 @@ def clean_data_from_playphrase(data_text, request_phrase=None, request_korean=No
                 }
             )
             if not created:
-                RequestTable.objects.increment_search_count(request_phrase)
+                request_obj.search_count += 1
+                request_obj.save(update_fields=['search_count'])
         except Exception as e:
             logger.warning(f"요청 기록 실패: {e}")
     
@@ -624,7 +625,7 @@ def evaluate_data_quality(movie_data):
 def integrate_with_get_movie_info(text):
     """get_movie_info.py와의 연동 함수"""
     try:
-        from phrase.application.get_movie_info import check_existing_database_data
+        from phrase.utils.get_movie_info import check_existing_database_data
         
         if check_existing_database_data(text):
             logger.info(f"get_movie_info와 연동: DB에 기존 데이터 존재 - {text}")
@@ -743,7 +744,7 @@ def test_four_modules_integration():
             test_results['views_integration'] = True
         
         # get_movie_info.py 연동 테스트
-        from phrase.application import get_movie_info
+        from phrase.utils import get_movie_info
         if hasattr(get_movie_info, 'check_existing_database_data'):
             test_results['get_movie_info_integration'] = True
         

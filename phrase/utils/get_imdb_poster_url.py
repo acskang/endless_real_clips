@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# dj/phrase/application/get_imdb_poster_url.py
+# dj/phrase/utils/get_imdb_poster_url.py
 """
 IMDB 포스터 URL 추출 및 저장 기능 - 4개 모듈 완전 최적화
 - models.py, managers.py, views.py, get_movie_info.py와 완벽 연동
@@ -40,7 +40,7 @@ class IMDBPosterExtractor:
         self.session = requests.Session()
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept': 'text/html,utils/xhtml+xml,utils/xml;q=0.9,image/webp,*/*;q=0.8',
             'Accept-Language': 'en-US,en;q=0.5',
             'Accept-Encoding': 'gzip, deflate',
             'Connection': 'keep-alive',

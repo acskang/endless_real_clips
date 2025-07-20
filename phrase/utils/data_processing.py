@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 # dj/phrase/utils/data_processing.py
 """
-데이터 처리 관련 헬퍼 함수들
+데이터 처리 관련 헬퍼 함수들 (수정됨)
+일본어, 중국어 필드 제거 완료
 """
 import time
 import logging
 from django.core.cache import cache
 from phrase.models import DialogueTable
-from phrase.application.translate import LibreTranslator
+from phrase.utils.translate import LibreTranslator
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +75,7 @@ def get_existing_results_from_db(request_phrase, request_korean=None):
 
 def build_movies_context_from_db(search_results):
     """
-    DB 검색 결과를 index.html용 context 형식으로 변환 - 템플릿 호환성 보장
+    DB 검색 결과를 index.html용 context 형식으로 변환 - 일본어/중국어 필드 제거 완료
     """
     try:
         movies_dict = {}
@@ -109,7 +110,7 @@ def build_movies_context_from_db(search_results):
                         'dialogues': []
                     }
                 
-                # 대사 정보 추가 (템플릿 호환을 위해 두 가지 필드명 모두 제공)
+                # 대사 정보 추가 (일본어/중국어 필드 제거)
                 dialogue_info = {
                     'id': dialogue.id,
                     
@@ -120,10 +121,6 @@ def build_movies_context_from_db(search_results):
                     # 한글 번역 (두 가지 필드명)
                     'text_ko': dialogue.dialogue_phrase_ko or '',
                     'dialogue_phrase_ko': dialogue.dialogue_phrase_ko or '',  # 템플릿 호환성
-                    
-                    # 기타 언어
-                    'text_ja': dialogue.dialogue_phrase_ja or '',
-                    'text_zh': dialogue.dialogue_phrase_zh or '',
                     
                     # 시간 정보 (두 가지 필드명)
                     'start_time': dialogue.dialogue_start_time,

@@ -11,7 +11,7 @@ from django.db import transaction, models
 from django.contrib.auth.decorators import user_passes_test
 
 from phrase.models import RequestTable, MovieTable, DialogueTable, UserSearchQuery
-from phrase.application.translate import LibreTranslator
+from phrase.utils.translate import LibreTranslator
 from ..utils.search_helpers import get_input_type
 
 logger = logging.getLogger(__name__)

@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 # dj/phrase/views/main_views.py
 """
-메인 뷰 - 핵심 검색 기능 (입력 검증 추가) - 디버그 강화
+메인 뷰 - 핵심 검색 기능 (수정됨)
+- 임포트 오류 수정
+- 일본어, 중국어 필드 제거 동기화
 """
 import time
 import logging
@@ -11,10 +13,11 @@ from django.http import HttpResponse
 from django.db import transaction
 
 from phrase.models import RequestTable, DialogueTable
-from phrase.application.get_movie_info import get_movie_info
-from phrase.application.clean_data import clean_data_v4
-from phrase.application.load_to_db import load_to_db
-from phrase.application.translate import LibreTranslator
+from phrase.utils.get_movie_info import get_movie_info
+from phrase.utils.clean_data import clean_data_v4
+from phrase.utils.load_to_db import load_to_db
+# 수정: phrase.application.translate -> phrase.utils.translate
+from phrase.utils.translate import LibreTranslator
 
 from ..utils.search_helpers import get_client_ip, record_search_query, increment_search_count
 from ..utils.data_processing import get_existing_results_from_db
@@ -42,7 +45,7 @@ def index(request):
 
 def process_text(request):
     """
-    텍스트 검색 처리 뷰 - 입력 검증 추가 (디버그 강화)
+    텍스트 검색 처리 뷰 - 입력 검증 추가 (수정됨)
     """
     print("🚀 DEBUG: process_text 함수 시작")
     print(f"🔍 DEBUG: 요청 메소드: {request.method}")

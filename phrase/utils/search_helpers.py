@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 # dj/phrase/utils/search_helpers.py
 """
-검색 관련 헬퍼 함수들
+검색 관련 헬퍼 함수들 (수정됨)
+- 임포트 오류 수정
 """
 import logging
 from phrase.models import RequestTable, UserSearchQuery
+from phrase.utils.translate import LibreTranslator
 
 logger = logging.getLogger(__name__)
 
@@ -80,9 +82,10 @@ def increment_search_count(request_phrase, request_korean, result_count, user_ip
 
 
 def get_input_type(user_input):
-    """입력구문 분류 함수"""
+    """입력구문 분류 함수 (수정됨)"""
     try:
-        from phrase.application.translate import LibreTranslator
+        # 수정: phrase.application.translate -> phrase.utils.translate
+
         translator = LibreTranslator()
         
         if translator.is_korean(user_input):

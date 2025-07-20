@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# dj/phrase/application/get_movie_info.py
+# dj/phrase/utils/get_movie_info.py
 """
 playphrase.me API 영화 정보 가져오기 모듈 - 최적화된 모델 활용
 - 새로운 모델과 매니저를 활용한 중복 검사
@@ -14,7 +14,7 @@ from django.core.cache import cache
 from django.conf import settings
 from django.utils import timezone
 from phrase.models import RequestTable, DialogueTable
-from phrase.application.clean_data import clean_data_from_playphrase
+from phrase.utils.clean_data import clean_data_from_playphrase
 
 logger = logging.getLogger(__name__)
 

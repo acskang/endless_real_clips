@@ -510,7 +510,7 @@ class CustomAdminSite(admin.AdminSite):
         
         # 통계 정보 수집
         try:
-            from .managers import get_all_statistics
+            from .models.managers import get_all_statistics
             stats = get_all_statistics()
             extra_context['custom_stats'] = stats
         except Exception as e:

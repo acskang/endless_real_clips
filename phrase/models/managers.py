@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# phrase/managers.py
+# phrase/models/managers.py
 """
 Django 모델 매니저 정의 (일본어/중국어 제거)
 - 커스텀 쿼리셋 및 매니저
@@ -9,6 +9,7 @@ Django 모델 매니저 정의 (일본어/중국어 제거)
 from django.db import models
 from django.core.cache import cache
 from django.utils import timezone
+from django.apps import apps
 import logging
 
 logger = logging.getLogger(__name__)
@@ -298,34 +299,32 @@ class DialogueManager(models.Manager):
         """검색 벡터 일괄 업데이트"""
         import re
         
-        dialogues = self.filter(is_active=True)
+        dialogues = list(self.filter(is_active=True))
         updated_count = 0
         batch_size = 100
         
-        for i, dialogue in enumerate(dialogues):
-            # 검색 벡터 생성
-            texts = [dialogue.dialogue_phrase]
-            if dialogue.dialogue_phrase_ko:
-                texts.append(dialogue.dialogue_phrase_ko)
+        for i in range(0, len(dialogues), batch_size):
+            batch = dialogues[i:i + batch_size]
             
-            # 텍스트 정규화
-            normalized_texts = []
-            for text in texts:
-                normalized = re.sub(r'[^\w\s]', ' ', text.lower())
-                normalized = re.sub(r'\s+', ' ', normalized).strip()
-                normalized_texts.append(normalized)
-            
-            dialogue.search_vector = ' '.join(normalized_texts)
-            updated_count += 1
+            for dialogue in batch:
+                # 검색 벡터 생성
+                texts = [dialogue.dialogue_phrase]
+                if dialogue.dialogue_phrase_ko:
+                    texts.append(dialogue.dialogue_phrase_ko)
+                
+                # 텍스트 정규화
+                normalized_texts = []
+                for text in texts:
+                    normalized = re.sub(r'[^\w\s]', ' ', text.lower())
+                    normalized = re.sub(r'\s+', ' ', normalized).strip()
+                    normalized_texts.append(normalized)
+                
+                dialogue.search_vector = ' '.join(normalized_texts)[:1000]
+                updated_count += 1
             
             # 배치 업데이트
-            if updated_count % batch_size == 0:
-                self.bulk_update([dialogue], ['search_vector'])
-                logger.info(f"검색 벡터 업데이트 진행: {updated_count}개 완료")
-        
-        # 남은 것들 업데이트
-        if updated_count % batch_size != 0:
-            self.bulk_update([dialogue], ['search_vector'])
+            self.model.objects.bulk_update(batch, ['search_vector'])
+            logger.info(f"검색 벡터 업데이트 진행: {updated_count}개 완료")
         
         logger.info(f"검색 벡터 일괄 업데이트 완료: {updated_count}개")
         return updated_count
@@ -433,8 +432,6 @@ def clear_all_model_caches():
 
 def get_all_statistics():
     """모든 모델의 통계 조회"""
-    from django.apps import apps
-    
     if not apps.ready:
         return {}
     

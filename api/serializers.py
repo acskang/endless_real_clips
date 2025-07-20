@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 # api/serializers.py
 """
-최적화된 DRF 시리얼라이저
-- 성능 최적화 (쿼리 최적화, 캐싱)
-- 중복 로직 제거
-- 매니저 메소드 활용
-- 일관된 검증 및 에러 처리
+최적화된 DRF 시리얼라이저 - 업데이트된 모델에 맞춰 수정
+- MySQL 호환성 개선된 모델 구조 반영
+- 긴 텍스트 필드 지원
+- 해시 기반 중복 검사 지원
 """
 from rest_framework import serializers
 from django.core.cache import cache
@@ -79,7 +78,7 @@ class ValidationMixin:
 # ===== 설계서 기반 최적화된 시리얼라이저 =====
 
 class OptimizedRequestTableSerializer(serializers.ModelSerializer, ValidationMixin):
-    """최적화된 요청테이블 시리얼라이저"""
+    """최적화된 요청테이블 시리얼라이저 - 업데이트된 모델 반영"""
     
     search_count = serializers.IntegerField(read_only=True)
     last_searched_at = serializers.DateTimeField(read_only=True)
@@ -88,36 +87,53 @@ class OptimizedRequestTableSerializer(serializers.ModelSerializer, ValidationMix
         read_only=True
     )
     
+    # 전체 텍스트 필드들
+    full_request_phrase = serializers.SerializerMethodField()
+    full_request_korean = serializers.SerializerMethodField()
+    
     class Meta:
         model = RequestTable
         fields = [
-            'request_phrase', 'request_korean', 'search_count',
-            'last_searched_at', 'translation_quality', 'translation_quality_display',
-            'created_at', 'updated_at'
+            'request_phrase', 'request_phrase_full', 'full_request_phrase',
+            'request_korean', 'request_korean_full', 'full_request_korean',
+            'request_hash', 'search_count', 'last_searched_at', 'result_count',
+            'translation_quality', 'translation_quality_display',
+            'ip_address', 'user_agent', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['created_at', 'updated_at', 'search_count', 'last_searched_at']
+        read_only_fields = [
+            'created_at', 'updated_at', 'search_count', 'last_searched_at',
+            'request_hash', 'result_count'
+        ]
+    
+    def get_full_request_phrase(self, obj):
+        """전체 요청구문 반환"""
+        return obj.get_full_phrase()
+    
+    def get_full_request_korean(self, obj):
+        """전체 한글구문 반환"""
+        return obj.get_full_korean()
     
     def validate_request_phrase(self, value):
         """요청구문 검증"""
         if not value or not value.strip():
             raise serializers.ValidationError('요청구문은 필수입니다.')
         
-        # 길이 검증
-        if len(value.strip()) > 500:
-            raise serializers.ValidationError('요청구문은 500자를 초과할 수 없습니다.')
+        # 길이 검증 (더 긴 텍스트 허용)
+        if len(value.strip()) > 2000:
+            raise serializers.ValidationError('요청구문은 2000자를 초과할 수 없습니다.')
         
         return value.strip()
     
     def validate_request_korean(self, value):
         """요청한글 검증"""
         if value:
-            if len(value.strip()) > 500:
-                raise serializers.ValidationError('요청한글은 500자를 초과할 수 없습니다.')
+            if len(value.strip()) > 2000:
+                raise serializers.ValidationError('요청한글은 2000자를 초과할 수 없습니다.')
             return value.strip()
         return value
 
 class OptimizedMovieTableSerializer(serializers.ModelSerializer, MediaURLMixin, CacheOptimizedMixin):
-    """최적화된 영화테이블 시리얼라이저"""
+    """최적화된 영화테이블 시리얼라이저 - 업데이트된 모델 반영"""
     
     dialogue_count = serializers.SerializerMethodField()
     poster_image_url = serializers.SerializerMethodField()
@@ -126,11 +142,18 @@ class OptimizedMovieTableSerializer(serializers.ModelSerializer, MediaURLMixin, 
     like_count = serializers.IntegerField(read_only=True)
     data_quality_display = serializers.CharField(source='get_data_quality_display', read_only=True)
     
+    # 전체 텍스트 필드들
+    full_movie_title = serializers.SerializerMethodField()
+    full_original_title = serializers.SerializerMethodField()
+    full_director = serializers.SerializerMethodField()
+    
     class Meta:
         model = MovieTable
         fields = [
-            'id', 'movie_title', 'original_title', 'display_title',
-            'release_year', 'production_country', 'director', 'genre',
+            'id', 'movie_title', 'movie_title_full', 'full_movie_title',
+            'original_title', 'original_title_full', 'full_original_title',
+            'display_title', 'release_year', 'production_country', 
+            'director', 'director_full', 'full_director', 'genre',
             'imdb_rating', 'imdb_url', 'poster_url', 'poster_image',
             'poster_image_path', 'poster_image_url', 'dialogue_count',
             'view_count', 'like_count', 'data_quality', 'data_quality_display',
@@ -138,6 +161,7 @@ class OptimizedMovieTableSerializer(serializers.ModelSerializer, MediaURLMixin, 
         ]
         read_only_fields = [
             'id', 'dialogue_count', 'poster_image_url', 'display_title',
+            'full_movie_title', 'full_original_title', 'full_director',
             'view_count', 'like_count', 'data_quality_display',
             'created_at', 'updated_at'
         ]
@@ -159,6 +183,18 @@ class OptimizedMovieTableSerializer(serializers.ModelSerializer, MediaURLMixin, 
         """표시용 제목 반환"""
         return obj.get_display_title()
     
+    def get_full_movie_title(self, obj):
+        """전체 영화 제목 반환"""
+        return obj.get_full_title()
+    
+    def get_full_original_title(self, obj):
+        """전체 원제목 반환"""
+        return obj.get_full_original_title()
+    
+    def get_full_director(self, obj):
+        """전체 감독명 반환"""
+        return obj.get_full_director()
+    
     def validate_movie_title(self, value):
         """영화 제목 검증"""
         if not value or not value.strip():
@@ -172,7 +208,7 @@ class OptimizedMovieTableSerializer(serializers.ModelSerializer, MediaURLMixin, 
         return value
 
 class OptimizedDialogueTableSerializer(serializers.ModelSerializer, MediaURLMixin, ValidationMixin):
-    """최적화된 대사테이블 시리얼라이저"""
+    """최적화된 대사테이블 시리얼라이저 - 업데이트된 모델 반영"""
     
     movie_title = serializers.CharField(source='movie.movie_title', read_only=True)
     movie_release_year = serializers.CharField(source='movie.release_year', read_only=True)
@@ -188,24 +224,35 @@ class OptimizedDialogueTableSerializer(serializers.ModelSerializer, MediaURLMixi
         source='get_translation_method_display', 
         read_only=True
     )
+    video_quality_display = serializers.CharField(
+        source='get_video_quality_display',
+        read_only=True
+    )
+    
+    # 전체 텍스트 필드들
+    full_movie_title = serializers.CharField(source='movie.get_full_title', read_only=True)
+    full_director = serializers.CharField(source='movie.get_full_director', read_only=True)
     
     class Meta:
         model = DialogueTable
         fields = [
-            'id', 'movie', 'movie_title', 'movie_release_year', 'movie_director',
-            'movie_poster_url', 'dialogue_phrase', 'dialogue_phrase_ko',
-            'dialogue_phrase_ja', 'dialogue_phrase_zh', 'dialogue_start_time',
-            'dialogue_end_time', 'duration_seconds', 'duration_display',
+            'id', 'movie', 'movie_title', 'full_movie_title', 'movie_release_year', 
+            'movie_director', 'full_director', 'movie_poster_url', 
+            'dialogue_phrase', 'dialogue_phrase_ko', 'dialogue_hash',
+            'dialogue_start_time', 'dialogue_end_time', 'duration_seconds', 'duration_display',
             'video_url', 'video_file', 'video_file_path', 'video_file_url',
-            'video_quality', 'translation_method', 'translation_method_display',
+            'file_size_bytes', 'video_quality', 'video_quality_display',
+            'translation_method', 'translation_method_display',
             'translation_quality', 'translation_quality_display',
-            'play_count', 'like_count', 'created_at', 'updated_at'
+            'play_count', 'like_count', 'search_vector', 'search_vector_full',
+            'created_at', 'updated_at'
         ]
         read_only_fields = [
-            'id', 'movie_title', 'movie_release_year', 'movie_director',
-            'movie_poster_url', 'video_file_url', 'duration_display',
-            'translation_quality_display', 'translation_method_display',
-            'play_count', 'like_count', 'created_at', 'updated_at'
+            'id', 'movie_title', 'full_movie_title', 'movie_release_year', 
+            'movie_director', 'full_director', 'movie_poster_url', 'video_file_url', 
+            'duration_display', 'translation_quality_display', 'translation_method_display',
+            'video_quality_display', 'dialogue_hash', 'search_vector', 'search_vector_full',
+            'play_count', 'like_count', 'file_size_bytes', 'created_at', 'updated_at'
         ]
     
     def get_movie_poster_url(self, obj):
@@ -255,12 +302,17 @@ class OptimizedDialogueSearchSerializer(serializers.ModelSerializer, MediaURLMix
     translationQuality = serializers.CharField(source='translation_quality', read_only=True)
     playCount = serializers.IntegerField(source='play_count', read_only=True)
     
+    # 전체 제목 정보
+    fullMovieTitle = serializers.CharField(source='movie.get_full_title', read_only=True)
+    fullDirector = serializers.CharField(source='movie.get_full_director', read_only=True)
+    koreanText = serializers.CharField(source='dialogue_phrase_ko', read_only=True)
+    
     class Meta:
         model = DialogueTable
         fields = [
-            'name', 'startTime', 'text', 'posterUrl', 'videoUrl',
-            'releaseYear', 'director', 'productionCountry', 'imdbUrl',
-            'translationQuality', 'playCount'
+            'name', 'fullMovieTitle', 'startTime', 'text', 'koreanText',
+            'posterUrl', 'videoUrl', 'releaseYear', 'director', 'fullDirector',
+            'productionCountry', 'imdbUrl', 'translationQuality', 'playCount'
         ]
     
     def get_posterUrl(self, obj):
@@ -293,6 +345,10 @@ class StatisticsSerializer(serializers.Serializer, CacheOptimizedMixin):
     avg_search_count = serializers.FloatField()
     avg_play_count = serializers.FloatField()
     
+    # MySQL 최적화 정보
+    index_usage = serializers.DictField()
+    cache_hit_rate = serializers.FloatField()
+    
     generated_at = serializers.DateTimeField()
 
 class SearchAnalyticsSerializer(serializers.Serializer):
@@ -304,12 +360,14 @@ class SearchAnalyticsSerializer(serializers.Serializer):
     translated_query = serializers.CharField(allow_null=True)
     search_method = serializers.ChoiceField(choices=[
         ('db_cache', 'DB 캐시'),
+        ('hash_lookup', '해시 검색'),
         ('external_api', '외부 API'),
         ('hybrid', '하이브리드')
     ])
     response_time_ms = serializers.IntegerField()
     result_count = serializers.IntegerField()
     cache_hit = serializers.BooleanField()
+    hash_match = serializers.BooleanField(default=False)
 
 # ===== 기존 호환성을 위한 최적화된 시리얼라이저 =====
 
@@ -387,6 +445,10 @@ class BulkDialogueUpdateSerializer(serializers.Serializer):
         choices=DialogueTable._meta.get_field('translation_method').choices,
         required=False
     )
+    video_quality = serializers.ChoiceField(
+        choices=DialogueTable._meta.get_field('video_quality').choices,
+        required=False
+    )
     is_active = serializers.BooleanField(required=False)
     
     def validate_ids(self, value):
@@ -417,6 +479,20 @@ class SearchOptimizationSerializer(serializers.Serializer):
         default='fair'
     )
     translation_required = serializers.BooleanField(default=False)
+    use_hash_lookup = serializers.BooleanField(default=True)
+    use_full_text_search = serializers.BooleanField(default=True)
+
+# ===== MySQL 최적화 관련 시리얼라이저 =====
+
+class MySQLOptimizationSerializer(serializers.Serializer):
+    """MySQL 최적화 정보 시리얼라이저"""
+    
+    table_name = serializers.CharField()
+    index_usage = serializers.DictField()
+    query_performance = serializers.DictField()
+    recommendations = serializers.ListField(child=serializers.CharField())
+    charset_info = serializers.DictField()
+    engine_info = serializers.CharField()
 
 # ===== 시리얼라이저 팩토리 함수 =====
 
@@ -431,6 +507,9 @@ def get_optimized_serializer(model_name, context=None, **kwargs):
         'legacy_movie': LegacyMovieSerializer,
         'legacy_quote': LegacyMovieQuoteSerializer,
         'legacy_search': LegacySearchSerializer,
+        'statistics': StatisticsSerializer,
+        'analytics': SearchAnalyticsSerializer,
+        'mysql_optimization': MySQLOptimizationSerializer,
     }
     
     serializer_class = serializer_mapping.get(model_name)
@@ -451,6 +530,11 @@ class PerformanceMetricsSerializer(serializers.Serializer):
     total_response_time_ms = serializers.FloatField()
     memory_usage_mb = serializers.FloatField()
     
+    # MySQL 특화 메트릭
+    mysql_index_hits = serializers.IntegerField()
+    mysql_full_scan_count = serializers.IntegerField()
+    hash_lookup_hits = serializers.IntegerField()
+    
     # 상세 분석
     slow_queries = serializers.ListField(child=serializers.CharField())
     cache_misses = serializers.ListField(child=serializers.CharField())
@@ -469,4 +553,4 @@ def log_serializer_performance(serializer_name, start_time, end_time, data_count
     if duration_ms > 1000:  # 1초 이상
         logger.warning(f"🐌 [Serializer] {serializer_name} 성능 저하 감지: {duration_ms:.2f}ms")
 
-logger.info("✅ 최적화된 시리얼라이저 로드 완료")
+logger.info("✅ MySQL 호환성 개선된 시리얼라이저 로드 완료")

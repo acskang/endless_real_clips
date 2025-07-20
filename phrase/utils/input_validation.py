@@ -5,7 +5,7 @@
 """
 import re
 import logging
-from phrase.application.translate import LibreTranslator
+from phrase.utils.translate import LibreTranslator
 
 logger = logging.getLogger(__name__)
 
