@@ -590,7 +590,6 @@ def initialize_search_analytics(query, translation_result, start_time):
     }
 
 def perform_db_search_optimized(translation_result, limit, search_options):
-    """최적화된 DB 검색 (매니저 메소드 적극 활용)"""
     request_phrase = translation_result['request_phrase']
     request_korean = translation_result['request_korean']
     
@@ -615,60 +614,60 @@ def perform_db_search_optimized(translation_result, limit, search_options):
     
     logger.info(f"🔍 [DBSearch] 매니저 검색 수행")
     
-    # 매니저의 고급 검색 메소드 활용
-    search_queryset = DialogueTable.objects.search_with_movie(request_phrase)
+    # 기본 쿼리셋 설정
+    def apply_filters(queryset):
+        # 고급 필터링 적용
+        if search_options.get('quality_filter'):
+            queryset = queryset.filter(translation_quality=search_options['quality_filter'])
+        
+        if search_options.get('movie_filter'):
+            queryset = queryset.filter(movie__movie_title__icontains=search_options['movie_filter'])
+        
+        if search_options.get('year_filter'):
+            queryset = queryset.filter(movie__release_year=search_options['year_filter'])
+        
+        if not search_options.get('include_inactive', False):
+            queryset = queryset.filter(is_active=True)
+        
+        return queryset
     
-    # 한글 검색 추가
-    if request_korean and not search_queryset.exists():
-        korean_queryset = DialogueTable.objects.search_with_movie(request_korean)
-        search_queryset = search_queryset.union(korean_queryset)
+    # 영어 검색 쿼리셋
+    search_queryset = apply_filters(DialogueTable.objects.search_with_movie(request_phrase))
     
-    # 고급 필터링 적용
-    if search_options.get('quality_filter'):
-        search_queryset = search_queryset.filter(
-            translation_quality=search_options['quality_filter']
-        )
-    
-    if search_options.get('movie_filter'):
-        search_queryset = search_queryset.filter(
-            movie__movie_title__icontains=search_options['movie_filter']
-        )
-    
-    if search_options.get('year_filter'):
-        search_queryset = search_queryset.filter(
-            movie__release_year=search_options['year_filter']
-        )
-    
-    if not search_options.get('include_inactive', False):
-        search_queryset = search_queryset.filter(is_active=True)
+    # 한글 검색 쿼리셋 (필요한 경우)
+    results = []
+    if search_queryset.exists():
+        results = list(search_queryset)
+    elif request_korean:
+        korean_queryset = apply_filters(DialogueTable.objects.search_with_movie(request_korean))
+        results = list(korean_queryset)
     
     # 정렬 옵션 적용
     sort_by = search_options.get('sort_by', 'relevance')
     if sort_by == 'popular':
-        search_queryset = search_queryset.order_by('-play_count', '-created_at')
+        results.sort(key=lambda x: (-x.play_count, x.created_at))
     elif sort_by == 'recent':
-        search_queryset = search_queryset.order_by('-created_at')
-    else:  # relevance (기본값)
-        # 검색어 일치도에 따른 정렬
-        search_queryset = search_queryset.order_by('-play_count', '-created_at')
+        results.sort(key=lambda x: x.created_at, reverse=True)
+    else:  # relevance
+        # 이미 매니저 메소드에서 적절히 정렬되었다고 가정
+        pass
     
     # 쿼리 최적화 적용
-    search_queryset = search_queryset.select_related('movie').only(
-        'id', 'dialogue_phrase', 'dialogue_phrase_ko',
-        'dialogue_start_time', 'video_url', 'play_count', 'like_count',
-        'translation_quality', 'translation_method',
-        'movie__id', 'movie__movie_title', 'movie__movie_title_full',
-        'movie__release_year', 'movie__director', 'movie__director_full',
-        'movie__poster_url', 'movie__poster_image'
-    )
-    
-    # 결과 조회 및 캐싱
-    results = list(search_queryset[:limit * 2])  # 여유있게 조회
+    results = [
+        DialogueTable.objects.select_related('movie').only(
+            'id', 'dialogue_phrase', 'dialogue_phrase_ko',
+            'dialogue_start_time', 'video_url', 'play_count', 'like_count',
+            'translation_quality', 'translation_method',
+            'movie__id', 'movie__movie_title', 'movie__movie_title_full',
+            'movie__release_year', 'movie__director', 'movie__director_full',
+            'movie__poster_url', 'movie__poster_image'
+        ).get(id=result.id)
+        for result in results[:limit * 2]  # 여유 있게 조회
+    ]
     
     if results:
         # 5분간 캐싱
         cache.set(cache_key, results, 300)
-        
         return {
             'found': True,
             'results': results,
