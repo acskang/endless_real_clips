@@ -7,7 +7,8 @@
 - 최신 serializers.py와 완벽 연동
 - 성능 최적화 (쿼리, 캐싱, 배치 처리)
 - 일본어/중국어 필드 제거 반영
-- 고급 검색 및 필터링 시스템
+- 고급 검색 및 필터링 시스템 구현
+- 레거시 호환성 유지 (Flutter 앱용)
 """
 from rest_framework import generics, status, filters
 from rest_framework.decorators import api_view, throttle_classes, permission_classes
